@@ -52,6 +52,22 @@ http://localhost:8000/health
 - Add authentication/authorization before using real learner data.
 - Add backups, database migrations, audit logging, and hospital-approved privacy/security controls before production use.
 
-## Current scoring note
+## Scoring rule
 
-The API intentionally does not invent a total-score rule. It stores detailed question events and can calculate a formal score after the educational scoring policy is defined. This avoids treating eventual-correct answers, first-attempt correctness, and retry penalties as if they were equivalent.
+AECOPD v1.0 uses equal-weight scoring:
+
+Score = (number of correctly completed questions / total scored questions) x 100
+
+The current scored set contains 7 questions, so each question is worth 100 / 7 = 14.2857 points before final rounding. The API calculates the score from the raw learning events when a session is completed, and rounds the final score to 2 decimals.
+
+Current scored questions:
+
+- act1_lung_sound
+- act1_cxr
+- act1_medication
+- act1_oxygen
+- act2_lung_sound
+- act2_abg
+- act2_treatment
+
+For multi-selection items, the question is counted as correct only after all required correct selections have been recorded. Wrong attempts do not deduct points under the current rule; they remain available in Learning_Events for learning-process analysis.
