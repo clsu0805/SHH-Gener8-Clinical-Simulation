@@ -110,10 +110,31 @@ SHA-256 source-media fingerprints:
 - media9.mp4 — 14014d9538859727c96a24670448410d71dc1db09251f9a01d02308959bd72b5
 - media10.mp4 — 30131c10fda4d629c28b9840a01133a4f14c6c8588bd7c9cb165958c96f32ed1
 
-## GitHub-hosted browser verification
+## GitHub-hosted asset verification
 
-Repository-hosted playback remains pending only until these verified binary assets are placed under:
-- scenarios/aecopd/assets/video/
-- scenarios/aecopd/assets/audio/
+Status: **PASS for repository media placement and binary integrity**
 
-After upload, compare the repository files against the SHA-256 fingerprints above and then complete the remaining media-fidelity checkboxes.
+Verified on `main`:
+
+- `scenarios/aecopd/assets/audio/media4.m4a` exists.
+- All nine MP4 files exist under `scenarios/aecopd/assets/video/`.
+- No root-level duplicate MP4/M4A files remain.
+- Git blob SHAs for all uploaded media match the verified local source package.
+- All nine MP4 files decode successfully end-to-end with FFmpeg.
+- The M4A respiratory audio decodes successfully end-to-end with FFmpeg.
+- Video streams are H.264 at 1280×720.
+- Audio-bearing source videos use AAC where present.
+- `media-manifest.js` points to the exact repository paths now present on `main`.
+
+## Browser playback verification limitation
+
+A headless Chromium playback check was attempted from the execution environment, but navigation to both local HTTP and `file://` URLs is blocked by an administrator policy in this environment (`ERR_BLOCKED_BY_ADMINISTRATOR`).
+
+Therefore the following browser-only checks still require one real browser launch from the user's environment or an accessible deployed site URL:
+
+- visible motion on the center-wall patient video
+- visible motion on the right-wall monitor video
+- audible lung-sound playback after user click
+- fullscreen interaction in the actual teaching browser
+
+This is an environment-access limitation, not a detected media or code failure. Repository paths, media integrity, codecs, durations, and decodeability are verified.
