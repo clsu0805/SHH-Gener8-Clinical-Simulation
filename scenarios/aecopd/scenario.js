@@ -12,7 +12,7 @@ const sensitivitySettings={
 let sensitivity=localStorage.getItem('gener8InteractionSensitivity')||'normal';
 if(!sensitivitySettings[sensitivity]) sensitivity='normal';
 let lastInteractionAt=0;
-const mediaForState={ACT1_START:M.act1InitialPatient,ACT1_VITALS:M.act1VitalsPatient,ACT1_ABG:M.act1EvidencePatient,ACT1_OXYGEN:M.act1EvidencePatient,ACT1_LUNG_SOUND:M.act1EvidencePatient,ACT1_CXR:M.act1EvidencePatient,ACT1_TREATMENT:M.act1EvidencePatient,ACT2_OVERVIEW:M.act2IntroPatient,ACT2_LUNG_SOUND:M.act2Patient,ACT2_ABG:M.act2Patient,ACT2_TREATMENT:M.act2Patient,ACT2_TREATMENT_CONFIRMED:M.act2Patient,ACT2_NIV_RESPONSE:M.nivPatient};
+const mediaForState={ACT1_START:M.act1InitialPatient,ACT1_VITALS:M.act1VitalsPatient,ACT1_ABG:M.act1EvidencePatient,ACT1_OXYGEN:M.act1EvidencePatient,ACT1_LUNG_SOUND:M.act1EvidencePatient,ACT1_CXR:M.act1EvidencePatient,ACT1_TREATMENT:M.act1EvidencePatient,ACT1_TX_MEDICATION:M.act1EvidencePatient,ACT1_TX_OXYGEN:M.act1EvidencePatient,ACT1_TX_REASSESS:M.act1EvidencePatient,ACT1_TREATMENT_SUMMARY:M.act1PostTreatmentPatient,ACT2_OVERVIEW:M.act2IntroPatient,ACT2_LUNG_SOUND:M.act2Patient,ACT2_ABG:M.act2Patient,ACT2_TREATMENT:M.act2Patient,ACT2_TREATMENT_CONFIRMED:M.act2Patient,ACT2_NIV_RESPONSE:M.nivPatient};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function createVideo(src,cls='patient-video'){const v=document.createElement('video');v.className=cls;v.src=src;v.autoplay=true;v.loop=true;v.muted=!patientSoundEnabled;v.playsInline=true;v.preload='auto';v.addEventListener('error',()=>{const e=document.createElement('div');e.className='media-error';e.textContent='Media unavailable: '+src.split('/').pop();v.replaceWith(e);});v.play().catch(()=>{});return v;}
 function updatePatientSoundUI(){
@@ -35,7 +35,7 @@ function addEvidence(s){const m={ACT1_VITALS:'vitals',ACT1_ABG:'abg',ACT1_OXYGEN
 function bindStates(){document.querySelectorAll('[data-state]').forEach(b=>b.onclick=()=>setState(b.dataset.state));}
 function renderAct1(){
   left.innerHTML=patientBackground()+act1Controls();
-  if(state==='ACT1_TREATMENT')renderAct1Treatment(); else right.innerHTML=evidenceCards();
+  if(['ACT1_TREATMENT','ACT1_TX_MEDICATION','ACT1_TX_OXYGEN','ACT1_TX_REASSESS','ACT1_TREATMENT_SUMMARY'].includes(state))renderAct1Treatment(); else right.innerHTML=evidenceCards();
 
   if(state==='ACT1_LUNG_SOUND'){
     left.innerHTML+=`<div class="question-panel"><h3>呼吸音題</h3><p class="small muted">請聽病人的呼吸音，選擇最符合的呼吸音。</p><button id="play-act1-lung" class="btn dark">▶ 播放呼吸音</button><div class="option-grid" style="margin-top:12px">
@@ -65,11 +65,84 @@ function renderAct1(){
   }
   bindStates();
 }
-function renderAct1Treatment(){right.innerHTML='<div class="eyebrow">Medical Order Wall</div><h2>Medical Order Wall</h2><div class="order-wall"><div class="order">'+esc(D.act1.treatment.airway)+'</div>'+[...act1Orders].map(x=>'<div class="order">'+esc(x)+'</div>').join('')+'</div><h3>Medication Orders</h3><img class="teaching-image" src="assets/images/medication-options.webp" alt="Medication option photos"><div class="option-grid">'+D.act1.treatment.medicationOptions.map((o,i)=>'<button class="btn dark" data-med="'+i+'">'+esc(o.label)+'</button>').join('')+'</div><h3>Oxygen Therapy</h3><img class="teaching-image" src="assets/images/oxygen-options.webp" alt="Oxygen therapy option photos"><div class="option-grid">'+D.act1.treatment.oxygenOptions.map((o,i)=>'<button class="btn dark" data-o2="'+i+'">'+esc(o.label)+'</button>').join('')+'</div><div id="act1-feedback" class="feedback">'+esc(D.act1.treatment.instruction)+'</div><button id="act1-complete" class="btn dark disabled" style="margin-top:14px">30-min reassessment → Act 2</button>';
-document.querySelectorAll('[data-med]').forEach(b=>b.onclick=()=>selectAct1(b,D.act1.treatment.medicationOptions[+b.dataset.med]));
-document.querySelectorAll('[data-o2]').forEach(b=>b.onclick=()=>selectAct1(b,D.act1.treatment.oxygenOptions[+b.dataset.o2]));updateAct1Complete();}
-function selectAct1(btn,opt){btn.classList.add(opt.correct?'correct':'wrong');if(opt.correct){act1Orders.add(opt.label);document.getElementById('act1-feedback').textContent='✓ Correct order added to Medical Order Wall.';}else document.getElementById('act1-feedback').textContent='✕ This order is not selected in the approved scenario.';renderAct1Treatment();}
-function updateAct1Complete(){const need=['Combivent 2.5 mL via nebulization Q6h PRN','Ceftriaxone 1 g IV q24h','Venturi Mask 28% — controlled oxygen, target SpO₂ 88–92%'];const ok=need.every(x=>act1Orders.has(x)),b=document.getElementById('act1-complete');if(ok){b.classList.remove('disabled');b.textContent=D.act1.treatment.reassessment+' → 6 hours later';b.onclick=()=>{mediaForState.ACT1_TREATMENT=M.act1PostTreatmentPatient;renderCenter();setTimeout(()=>setState('ACT2_OVERVIEW'),300);};}}
+
+function act1TreatmentMenu(){
+  const items=[
+    ['維持呼吸道暢通，必要時抽痰','airway'],
+    ['藥物治療','medication'],
+    ['調整氧氣並密切監測 SpO₂','oxygen'],
+    ['心電圖檢查','ekg'],
+    ['先給予利尿劑 20 mg IV','diuretic'],
+    ['30 分鐘內重新評估呼吸狀況','reassess'],
+    ['電腦斷層檢查','ct']
+  ];
+  const active=state==='ACT1_TX_MEDICATION'?'medication':state==='ACT1_TX_OXYGEN'?'oxygen':state==='ACT1_TX_REASSESS'?'reassess':'';
+  return '<div class="eyebrow">左牆｜主要處置</div><h1>主要處置</h1><p class="muted small">選擇目前優先處置，逐步建立 Medical Order Wall。</p><div class="tx-menu">'+items.map(([label,key])=>'<button class="btn '+(active===key?'active ':'')+(key==='airway'?'correct ':'')+'" data-a1tx="'+key+'">'+esc(label)+'</button>').join('')+'</div>';
+}
+function act1OrderWall(){
+  const base=['維持呼吸道暢通，必要時協助清除分泌物'];
+  return '<div class="eyebrow">右牆｜Medical Order Wall</div><h2>Medical Order Wall</h2><div class="order-wall">'+base.concat([...act1Orders]).map(x=>'<div class="order">'+esc(x)+'</div>').join('')+'</div>';
+}
+function renderAct1Treatment(){
+  left.innerHTML=act1TreatmentMenu();
+  right.innerHTML=act1OrderWall();
+  document.querySelectorAll('[data-a1tx]').forEach(b=>b.onclick=()=>handleAct1TxMenu(b.dataset.a1tx));
+
+  if(state==='ACT1_TREATMENT'){
+    right.innerHTML+= '<div class="feedback">請依序完成：藥物治療 → 氧氣治療 → 30 分鐘重新評估。</div>';
+  }
+
+  if(state==='ACT1_TX_MEDICATION'){
+    right.innerHTML+= '<h3>Medication Orders</h3><img class="teaching-image" src="assets/images/medication-options.webp" alt="Medication option photos"><div class="option-grid">'+D.act1.treatment.medicationOptions.map((o,i)=>'<button class="btn dark '+(act1Orders.has(o.label)&&o.correct?'correct':'')+'" data-med="'+i+'">'+esc(o.label)+'</button>').join('')+'</div><div id="act1-feedback" class="feedback">選擇本情境中正確的藥物處置。</div>';
+    document.querySelectorAll('[data-med]').forEach(b=>b.onclick=()=>selectAct1(b,D.act1.treatment.medicationOptions[+b.dataset.med]));
+  }
+
+  if(state==='ACT1_TX_OXYGEN'){
+    right.innerHTML+= '<h3>Oxygen Therapy</h3><img class="teaching-image" src="assets/images/oxygen-options.webp" alt="Oxygen therapy option photos"><div class="option-grid">'+D.act1.treatment.oxygenOptions.map((o,i)=>'<button class="btn dark '+(act1Orders.has(o.label)&&o.correct?'correct':'')+'" data-o2="'+i+'">'+esc(o.label)+'</button>').join('')+'</div><div id="act1-feedback" class="feedback">選擇 controlled oxygen，目標 SpO₂ 88–92%。</div>';
+    document.querySelectorAll('[data-o2]').forEach(b=>b.onclick=()=>selectAct1(b,D.act1.treatment.oxygenOptions[+b.dataset.o2]));
+  }
+
+  if(state==='ACT1_TX_REASSESS'){
+    if(!act1Orders.has(D.act1.treatment.reassessment)) act1Orders.add(D.act1.treatment.reassessment);
+    right.innerHTML=act1OrderWall()+'<div class="feedback">✓ '+esc(D.act1.treatment.reassessment)+'</div><button id="show-act1-summary" class="btn dark next-major">查看治療重點 →</button>';
+    document.getElementById('show-act1-summary').onclick=()=>setState('ACT1_TREATMENT_SUMMARY');
+  }
+
+  if(state==='ACT1_TREATMENT_SUMMARY'){
+    const summary=[
+      'Venturi Mask 28%：controlled oxygen，目標 SpO₂ 88–92%',
+      'Combivent 2.5 mL via nebulization：短效支氣管擴張',
+      'Prednisolone 40 mg PO once daily × 5 days',
+      'Ceftriaxone 1 g IV q24h',
+      'Airway clearance：鼓勵咳痰，必要時清除分泌物',
+      '30 分鐘內重新評估並 repeat ABG'
+    ];
+    left.innerHTML=act1TreatmentMenu()+'<div class="summary-panel"><h2>治療重點</h2><ul>'+summary.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
+    right.innerHTML=act1OrderWall()+'<div class="selected-treatment-grid"><img src="assets/images/medication-options.webp" alt="Selected medication reference"><img src="assets/images/oxygen-options.webp" alt="Selected oxygen reference"></div><button id="to-act2" class="btn dark next-major">6 小時後：進入第二幕 →</button>';
+    document.getElementById('to-act2').onclick=()=>setState('ACT2_OVERVIEW');
+  }
+}
+function handleAct1TxMenu(key){
+  if(key==='medication') return setState('ACT1_TX_MEDICATION');
+  if(key==='oxygen') return setState('ACT1_TX_OXYGEN');
+  if(key==='reassess') return setState('ACT1_TX_REASSESS');
+  if(key==='airway') return;
+  const note=document.querySelector('.feedback');
+  if(note) note.textContent='✕ 此項不是附件簡報中的優先處置。';
+}
+function selectAct1(btn,opt){
+  const feedback=document.getElementById('act1-feedback');
+  btn.classList.add(opt.correct?'correct':'wrong');
+  if(opt.correct){
+    act1Orders.add(opt.label);
+    if(feedback)feedback.textContent='✓ Correct order added to Medical Order Wall.';
+  }else{
+    if(feedback)feedback.textContent='✕ This order is not selected in the approved scenario.';
+  }
+  if(opt.correct){
+    setTimeout(()=>renderAct1Treatment(),120);
+  }
+}
 function act2Left(done=false){if(done)return '<div class="eyebrow">Treatment Response</div><h1>NIV 後病人逐步改善</h1><div class="card"><ul class="status-list">'+D.act2.response.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div><h3>Treatment Summary</h3><div class="card"><p>'+D.act2.confirmed.map(esc).join('<br>')+'</p></div>';return '<div class="eyebrow">Act 2｜6 hours later</div><h1>病況改變｜6 小時後</h1><div class="card"><ul class="status-list">'+D.act2.status.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div><h3>已完成治療</h3><div class="card"><p>'+D.act2.completed.map(esc).join('<br>')+'</p></div><div class="card warning"><h3>持續惡化警訊</h3><p>SpO₂ 83%<br>已在 controlled oxygen 下，仍明顯呼吸費力</p></div>';}
 function monitor(src){return '<div class="eyebrow">Dynamic Vital Monitor</div><div id="monitor-slot"></div>';}
 function mountMonitor(src){const s=document.getElementById('monitor-slot');if(s)s.appendChild(createVideo(src,'monitor-video'));}
@@ -78,9 +151,18 @@ function lung(){right.innerHTML=monitor(M.act2Monitor)+'<h2>Lung Sound</h2><butt
 function abg(){right.innerHTML=monitor(M.act2Monitor)+'<h2>ABG</h2><div class="badge-row">'+D.act2.abg.map(x=>'<span class="badge">'+esc(x)+'</span>').join('')+'</div><div class="option-grid" style="margin-top:16px">'+D.act2.abgOptions.map((x,i)=>'<button class="btn dark" data-abg="'+i+'">'+esc(x)+'</button>').join('')+'</div><div id="feedback" class="feedback">Interpret the ABG.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-abg]').forEach(b=>b.onclick=()=>{const ans=D.act2.abgOptions[+b.dataset.abg],ok=ans===D.act2.abgCorrect;b.classList.add(ok?'correct':'wrong');document.getElementById('feedback').textContent=ok?'✓ '+D.act2.abgCorrect:'✕ Re-integrate pH, PaCO₂ and HCO₃⁻.';});}
 function treatment(){txSelected.clear();right.innerHTML=monitor(M.act2Monitor)+'<h2>Main Treatment</h2><p class="small muted">請選擇目前優先處置。</p><div class="option-grid">'+D.act2.treatmentOptions.map((x,i)=>'<button class="btn dark" data-tx="'+i+'">'+esc(x.label)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the four core immediate treatments.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>selectTx(b,+b.dataset.tx));}
 function selectTx(btn,i){const o=D.act2.treatmentOptions[i];if(o.correct===true){txSelected.add(i);btn.classList.add('correct');}else if(o.correct==='followup'){btn.classList.add('active');document.getElementById('feedback').textContent='Follow-up ABG is an important reassessment step after NIV.';return;}else btn.classList.add('wrong');if(txSelected.size===4){document.getElementById('feedback').textContent='✓ Core treatment selections confirmed. Preparing NIV.';setTimeout(()=>setState('ACT2_TREATMENT_CONFIRMED'),900);}}
-function confirmed(){right.innerHTML=monitor(M.act2Monitor)+'<h2>Main Treatment</h2><div class="order-wall">'+D.act2.treatmentOptions.map(o=>'<div class="order">'+(o.correct===true?'✓ ':o.correct===false?'✕ ':'↻ ')+esc(o.label)+'</div>').join('')+'</div><button id="start-niv" class="btn dark" style="margin-top:15px">Initiate NIV</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
-function niv(){right.innerHTML=monitor(M.nivMonitor)+'<h2>Confirmed Orders</h2><div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div>';mountMonitor(M.nivMonitor);}
-function setState(s){state=s;addEvidence(s);renderCenter();if(s.startsWith('ACT1_'))renderAct1();else{left.innerHTML=act2Left(s==='ACT2_NIV_RESPONSE');if(s==='ACT2_OVERVIEW')overview();if(s==='ACT2_LUNG_SOUND')lung();if(s==='ACT2_ABG')abg();if(s==='ACT2_TREATMENT')treatment();if(s==='ACT2_TREATMENT_CONFIRMED')confirmed();if(s==='ACT2_NIV_RESPONSE')niv();}}
+function confirmed(){right.innerHTML=monitor(M.act2Monitor)+'<h2>主要處置｜正確處置確認</h2><div class="order-wall">'+D.act2.treatmentOptions.map(o=>'<div class="order">'+(o.correct===true?'✓ ':o.correct===false?'✕ ':'↻ ')+esc(o.label)+'</div>').join('')+'</div><div class="feedback">正確處置確認：準備啟動 NIV</div><button id="start-niv" class="btn dark next-major">▶ 啟動 NIV → 查看治療後狀態</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
+function niv(){right.innerHTML='<div class="eyebrow">NIV 後動態監測</div>'+monitor(M.nivMonitor)+'<h2>Confirmed orders</h2><div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div><div class="completion-banner">AECOPD Scenario v1.0｜NIV initiated｜病人安靜休息，呼吸逐步平穩</div>';mountMonitor(M.nivMonitor);}
+function setState(s){state=s;addEvidence(s);renderCenter();if(s.startsWith('ACT1_'))renderAct1();else{left.innerHTML=act2Left(s==='ACT2_NIV_RESPONSE');if(s==='ACT2_OVERVIEW')overview();if(s==='ACT2_LUNG_SOUND')lung();if(s==='ACT2_ABG')abg();if(s==='ACT2_TREATMENT')treatment();if(s==='ACT2_TREATMENT_CONFIRMED')confirmed();if(s==='ACT2_NIV_RESPONSE')niv();}updateStepUI();}
+
+const instructorSteps=['ACT1_START','ACT1_VITALS','ACT1_ABG','ACT1_OXYGEN','ACT1_LUNG_SOUND','ACT1_CXR','ACT1_TREATMENT','ACT1_TX_MEDICATION','ACT1_TX_OXYGEN','ACT1_TX_REASSESS','ACT1_TREATMENT_SUMMARY','ACT2_OVERVIEW','ACT2_LUNG_SOUND','ACT2_ABG','ACT2_TREATMENT','ACT2_TREATMENT_CONFIRMED','ACT2_NIV_RESPONSE'];
+function updateStepUI(){
+  const i=instructorSteps.indexOf(state),label=document.getElementById('step-label');
+  if(label)label.textContent=i>=0?'Step '+(i+1)+' / '+instructorSteps.length:'Step';
+  const p=document.getElementById('prev-step-btn'),n=document.getElementById('next-step-btn');
+  if(p)p.disabled=i<=0;if(n)n.disabled=i<0||i>=instructorSteps.length-1;
+}
+function moveStep(delta){const i=instructorSteps.indexOf(state);if(i<0)return;const ni=Math.max(0,Math.min(instructorSteps.length-1,i+delta));setState(instructorSteps[ni]);}
 function applySensitivity(level){
   sensitivity=level;
   document.body.dataset.sensitivity=level;
@@ -117,6 +199,6 @@ document.addEventListener('pointerleave',e=>{
   if(b) b.classList.remove('sensor-focus');
 },true);
 function scale(){stage.style.transform='scale('+Math.min(innerWidth/5760,innerHeight/1080)+')';}function fullscreen(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
-document.querySelectorAll('#toolbar [data-jump]').forEach(b=>b.onclick=()=>setState(b.dataset.jump));document.getElementById('patient-sound-btn').onclick=togglePatientSound;document.getElementById('sensitivity-btn').onclick=cycleSensitivity;document.getElementById('fullscreen-btn').onclick=fullscreen;addEventListener('resize',scale);addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='1')setState('ACT1_START');if(k==='2')setState('ACT2_OVERVIEW');if(k==='f')fullscreen();if(k==='s')cycleSensitivity();});
+document.querySelectorAll('#toolbar [data-jump]').forEach(b=>b.onclick=()=>setState(b.dataset.jump));document.getElementById('prev-step-btn').onclick=()=>moveStep(-1);document.getElementById('next-step-btn').onclick=()=>moveStep(1);document.getElementById('patient-sound-btn').onclick=togglePatientSound;document.getElementById('sensitivity-btn').onclick=cycleSensitivity;document.getElementById('fullscreen-btn').onclick=fullscreen;addEventListener('resize',scale);addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='1')setState('ACT1_START');if(k==='2')setState('ACT2_OVERVIEW');if(k==='f')fullscreen();if(k==='s')cycleSensitivity();if(e.key==='ArrowLeft')moveStep(-1);if(e.key==='ArrowRight')moveStep(1);});
 window.Gener8AECOPD={setState,getState:()=>state,setSensitivity:applySensitivity,getSensitivity:()=>sensitivity,togglePatientSound};applySensitivity(sensitivity);updatePatientSoundUI();scale();setState(D.states.ACT1_START);
 })();
