@@ -41,7 +41,29 @@ function playLungAudio(feedbackId){
 function pauseLungAudio(){
   if(lungAudio&&!lungAudio.paused)lungAudio.pause();
 }
-function createVideo(src,cls='patient-video'){const v=document.createElement('video');v.className=cls;v.src=src;v.autoplay=true;v.loop=true;v.muted=!patientSoundEnabled;v.playsInline=true;v.preload='auto';v.addEventListener('error',()=>{const e=document.createElement('div');e.className='media-error';e.textContent='Media unavailable: '+src.split('/').pop();v.replaceWith(e);});v.play().catch(()=>{});return v;}
+function createVideo(src,cls='patient-video'){
+  const v=document.createElement('video');
+  v.className=cls;
+  v.muted=true;
+  v.defaultMuted=true;
+  v.volume=0;
+  v.playsInline=true;
+  v.loop=true;
+  v.preload='auto';
+  v.src=src;
+  v.autoplay=true;
+  v.setAttribute('muted','');
+  v.setAttribute('playsinline','');
+  v.addEventListener('volumechange',()=>{if(!v.muted||v.volume!==0){v.muted=true;v.volume=0;}});
+  v.addEventListener('error',()=>{
+    const e=document.createElement('div');
+    e.className='media-error';
+    e.textContent='Media unavailable: '+src.split('/').pop();
+    v.replaceWith(e);
+  });
+  v.play().catch(()=>{});
+  return v;
+}
 function updatePatientSoundUI(){
   const b=document.getElementById('patient-sound-btn');
   if(b){b.style.display='none';b.setAttribute('aria-hidden','true');}
@@ -279,6 +301,7 @@ function initSessionForm(){
     localStorage.setItem('gener8AECOPDSession',JSON.stringify(sessionMeta));
     document.getElementById('login-overlay').classList.add('hidden');
     document.body.classList.remove('prelogin');
+    setState(D.states.ACT1_START);
   };
 }
 function openSatisfactionSurvey(){
@@ -338,5 +361,5 @@ document.addEventListener('pointerleave',e=>{
 },true);
 function scale(){stage.style.transform='scale('+Math.min(innerWidth/5760,innerHeight/1080)+')';}function fullscreen(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
 document.querySelectorAll('#toolbar [data-jump]').forEach(b=>b.onclick=()=>setState(b.dataset.jump));document.getElementById('prev-step-btn').onclick=()=>moveStep(-1);document.getElementById('next-step-btn').onclick=()=>moveStep(1);document.getElementById('patient-sound-btn').onclick=togglePatientSound;document.getElementById('sensitivity-btn').onclick=cycleSensitivity;document.getElementById('fullscreen-btn').onclick=fullscreen;addEventListener('resize',scale);addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='1')setState('ACT1_START');if(k==='2')setState('ACT2_OVERVIEW');if(k==='f')fullscreen();if(k==='s')cycleSensitivity();if(e.key==='ArrowLeft')moveStep(-1);if(e.key==='ArrowRight')moveStep(1);});
-window.Gener8AECOPD={setState,getState:()=>state,setSensitivity:applySensitivity,getSensitivity:()=>sensitivity,openSatisfactionSurvey};initSessionForm();initSurvey();applySensitivity(sensitivity);updatePatientSoundUI();scale();setState(D.states.ACT1_START);ensureLoginVisible();
+window.Gener8AECOPD={setState,getState:()=>state,setSensitivity:applySensitivity,getSensitivity:()=>sensitivity,openSatisfactionSurvey};initSessionForm();initSurvey();applySensitivity(sensitivity);updatePatientSoundUI();scale();left.innerHTML='';center.innerHTML='';right.innerHTML='';ensureLoginVisible();
 })();
