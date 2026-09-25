@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHH Gener8 · AECOPD Clinical Simulation</title>
+<style>
+:root{--bg:#071A33;--panel:#0B2545;--panel2:#102E52;--text:#fff;--muted:#BFD0E3;--accent:#4DA3FF;--ok:#52D273;--bad:#FF6B6B;--warn:#FFD166}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#020913;color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei",Arial,sans-serif;overflow:hidden}
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#020913}
+#stage{width:5760px;height:1080px;display:grid;grid-template-columns:1920px 1920px 1920px;transform-origin:center center;background:var(--bg)}
+.wall{height:1080px;padding:56px 64px;background:linear-gradient(180deg,var(--bg),#06162b);border-right:2px solid rgba(255,255,255,.08);position:relative;overflow:hidden}
+.wall:last-child{border-right:0}.eyebrow{font-size:30px;color:#8FC5FF;letter-spacing:.08em;margin-bottom:14px}
+h1{font-size:64px;line-height:1.12;margin:0 0 30px}h2{font-size:46px;margin:0 0 24px}h3{font-size:34px;margin:26px 0 18px}
+p,li{font-size:34px;line-height:1.5}.muted{color:var(--muted)}ul{margin:0;padding-left:44px}
+.card{background:rgba(16,46,82,.88);border:2px solid rgba(143,197,255,.2);border-radius:28px;padding:28px 32px;margin:18px 0}
+.alert{border-left:10px solid var(--warn)}.danger{border-left:10px solid var(--bad)}
+.centerbox{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.patient{width:82%;height:66%;border-radius:34px;background:radial-gradient(circle at 50% 38%,#234d78,#0b223d 64%,#06162b);border:2px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.patient .avatar{font-size:210px;filter:grayscale(.1)}.caption{font-size:36px;color:var(--muted);margin-top:26px}
+.monitor{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:28px}
+.vital{background:#04111f;border:2px solid rgba(255,255,255,.12);border-radius:22px;padding:18px 22px}.vital span{display:block;color:#8FC5FF;font-size:24px}.vital strong{font-size:52px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:16px}.btn{font-size:30px;text-align:left;padding:22px 24px;border-radius:18px;border:2px solid rgba(143,197,255,.25);background:var(--panel2);color:#fff;cursor:pointer}
+.btn:hover{border-color:var(--accent);transform:translateY(-1px)}.btn.correct{border-color:var(--ok);background:rgba(82,210,115,.12)}.btn.wrong{border-color:var(--bad);background:rgba(255,107,107,.12)}
+.toolbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:20;background:rgba(2,9,19,.88);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:10px 14px;display:flex;gap:8px}
+.toolbar button{background:#102E52;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px 14px;font-size:15px;cursor:pointer}
+.status{font-size:27px;color:#9FD1FF;margin-bottom:18px}.answer{font-size:28px;margin-top:16px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.06)}
+.hide{display:none}.badge{display:inline-block;padding:9px 16px;border-radius:999px;background:#12385f;color:#a8d4ff;font-size:24px;margin-right:10px}
+@media(max-width:1200px){.toolbar{max-width:95vw;overflow:auto}}
+</style>
+</head>
+<body>
+<div id="viewport"><main id="stage">
+<section id="left-wall" class="wall"></section>
+<section id="center-wall" class="wall"></section>
+<section id="right-wall" class="wall"></section>
+</main></div>
+<div class="toolbar">
+<button onclick="setScene('overview')">2 第二幕</button>
+<button onclick="setScene('lung')">L Lung Sound</button>
+<button onclick="setScene('abg')">A ABG</button>
+<button onclick="setScene('treatment')">T Treatment</button>
+<button onclick="setScene('niv')">N NIV 後</button>
+<button onclick="toggleFull()">F 全螢幕</button>
+</div>
+<script>
+const S={
+overview:{title:"第二幕｜6 小時後，病人明顯更喘",caption:"病人持續呼吸費力，等待重新評估"},
+lung:{title:"Lung Sound 重新評估",caption:"播放呼吸音後，選擇最符合目前病況的描述"},
+abg:{title:"ABG 判讀",caption:"病人持續呼吸費力，等待 ABG 判讀"},
+treatment:{title:"主要處置",caption:"病人已呈現 ventilatory failure，進入主要處置"},
+niv:{title:"NIV initiated",caption:"病人安靜休息，呼吸逐步平穩"}
+};
+const left=document.getElementById("left-wall"),center=document.getElementById("center-wall"),right=document.getElementById("right-wall"),stage=document.getElementById("stage");
+function baseLeft(improved=false){
+ if(improved)return '<div class="eyebrow">治療後狀態</div><h1>NIV 後病人逐步改善</h1><div class="card"><ul><li>呼吸頻率下降至 18–20/min</li><li>SpO₂ 上升至 90–93%</li><li>呼吸功下降、較能安穩休息</li></ul></div><h3>治療重點</h3><div class="card"><p>NIV ventilatory support<br>Repeat bronchodilator<br>Airway clearance<br>Repeat ABG / close monitoring<br>Prednisolone 40 mg PO daily × 5 days</p></div>';
+ return '<div class="eyebrow">病況改變｜6 小時後</div><h1>AECOPD 持續惡化</h1><div class="card"><ul><li>Alert，但疲倦、焦慮</li><li>只能說短句</li><li>呼吸費力，使用 accessory muscles</li><li>Venturi Mask 28%，SpO₂ 83%</li></ul></div><h3>已完成治療</h3><div class="card"><p>Airway clearance<br>Combivent nebulization<br>Ceftriaxone 1 g IV q24h<br>Venturi Mask 28%</p></div><div class="card danger"><strong style="font-size:38px">持續惡化警訊</strong><p>SpO₂ 83%｜controlled oxygen 下仍明顯呼吸費力</p></div>';
+}
+function centerPanel(scene){
+ const improved=scene==="niv";
+ center.innerHTML='<div class="centerbox"><div class="eyebrow">'+S[scene].title+'</div><div class="patient"><div><div class="avatar">'+(improved?'😌':'😮‍💨')+'</div><div style="font-size:44px">'+(improved?'NIV full-face mask｜呼吸逐步平穩':'Virtual Patient｜AECOPD')+'</div></div></div><div class="caption">'+S[scene].caption+'</div></div>';
+}
+function monitor(improved=false){
+ const vals=improved?[["HR","88"],["RR","19/min"],["SpO₂","92%"],["BP","136/78"]]:[["HR","112"],["RR","32/min"],["SpO₂","83%"],["BP","148/86"]];
+ return '<div class="eyebrow">'+(improved?'NIV 後動態監測':'動態生命徵象監視')+'</div><div class="monitor">'+vals.map(v=>'<div class="vital"><span>'+v[0]+'</span><strong>'+v[1]+'</strong></div>').join("")+'</div>';
+}
+function overview(){right.innerHTML=monitor(false)+'<h2>重新評估</h2><div class="actions"><button class="btn" onclick="setScene(\'lung\')">Lung Sound</button><button class="btn" onclick="setScene(\'abg\')">ABG</button><button class="btn" onclick="setScene(\'treatment\')">主要處置</button></div>'}
+function lung(){
+ right.innerHTML=monitor(false)+'<h2>Lung Sound</h2><div class="status">選擇最符合目前病況的描述</div><div class="actions" id="lungOpts">'+[
+ "Bilateral basal crackles",
+ "Bilateral expiratory wheezing with decreased air entry",
+ "Unilateral absent breath sound",
+ "Inspiratory stridor"
+ ].map((x,i)=>'<button class="btn" onclick="lungAns(this,'+i+')">'+x+'</button>').join("")+'</div><div id="lungFeedback" class="answer hide"></div>';
+}
+function lungAns(el,i){document.querySelectorAll("#lungOpts .btn").forEach(b=>b.classList.remove("correct","wrong"));const ok=i===1;el.classList.add(ok?"correct":"wrong");const f=document.getElementById("lungFeedback");f.classList.remove("hide");f.innerHTML=ok?"✓ 正確：Bilateral expiratory wheezing with decreased air entry":"✕ 再評估目前 AECOPD 惡化的氣流受限表現。"}
+function abg(){
+ right.innerHTML=monitor(false)+'<h2>ABG</h2><div class="card"><p><span class="badge">pH 7.30</span><span class="badge">PaCO₂ 68</span><span class="badge">PaO₂ 52</span><span class="badge">HCO₃⁻ 34</span><span class="badge">SaO₂ 83%</span></p></div><div class="actions" id="abgOpts">'+[
+ "Compensated chronic respiratory acidosis",
+ "Acute-on-chronic hypercapnic respiratory failure with respiratory acidosis",
+ "Acute hypoxemic respiratory failure",
+ "Compensated chronic metabolic acidosis"
+ ].map((x,i)=>'<button class="btn" onclick="abgAns(this,'+i+')">'+x+'</button>').join("")+'</div><div id="abgFeedback" class="answer hide"></div>';
+}
+function abgAns(el,i){document.querySelectorAll("#abgOpts .btn").forEach(b=>b.classList.remove("correct","wrong"));const ok=i===1;el.classList.add(ok?"correct":"wrong");const f=document.getElementById("abgFeedback");f.classList.remove("hide");f.innerHTML=ok?"✓ Acute-on-chronic hypercapnic respiratory failure with respiratory acidosis":"✕ 請重新整合 pH、PaCO₂ 與 HCO₃⁻。"}
+const tx=[
+["第二輪支擴",1],["做 EKG / 檢查 BNP level",0],["Airway clearance",1],["Follow ABG",2],
+["Non-Rebreathing Mask",0],["Non-invasive Ventilation",1],["High-Flow Oxygen nasal cannula",0],["Prednisolone 40 mg PO once daily × 5 days",1]
+];
+let selected=new Set();
+function treatment(){
+ selected.clear();right.innerHTML=monitor(false)+'<h2>主要處置</h2><div class="status">請選擇目前優先處置。</div><div class="actions" id="txOpts">'+tx.map((x,i)=>'<button class="btn" onclick="txAns(this,'+i+')">'+x[0]+'</button>').join("")+'</div><div id="txFeedback" class="answer">需選出 4 項核心處置。</div>';
+}
+function txAns(el,i){
+ if(tx[i][1]===2){el.classList.toggle("correct");document.getElementById("txFeedback").innerHTML="Follow-up ABG 為 NIV 後重要重新評估步驟。";return}
+ if(tx[i][1]===1){selected.add(i);el.classList.add("correct")}else{el.classList.add("wrong")}
+ if(selected.size===4){document.getElementById("txFeedback").innerHTML="✓ 核心處置完成：第二輪支擴、Airway clearance、NIV、Prednisolone。即將進入 NIV 後狀態。";setTimeout(()=>setScene("niv"),1200)}
+}
+function niv(){
+ right.innerHTML=monitor(true)+'<h2>Confirmed orders</h2><div class="card"><p>✓ Initiate NIV<br>✓ Repeat bronchodilator<br>✓ Airway clearance<br>✓ Follow-up ABG / close monitoring<br>✓ Prednisolone 40 mg PO daily × 5 days</p></div>';
+}
+function setScene(scene){
+ left.innerHTML=baseLeft(scene==="niv");centerPanel(scene);
+ if(scene==="overview")overview();if(scene==="lung")lung();if(scene==="abg")abg();if(scene==="treatment")treatment();if(scene==="niv")niv();
+}
+function scale(){const s=Math.min(innerWidth/5760,innerHeight/1080);stage.style.transform="scale("+s+")"}
+function toggleFull(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.()}
+addEventListener("resize",scale);addEventListener("keydown",e=>{const k=e.key.toLowerCase();if(k==="2")setScene("overview");if(k==="l")setScene("lung");if(k==="a")setScene("abg");if(k==="t")setScene("treatment");if(k==="n")setScene("niv");if(k==="f")toggleFull()});
+scale();setScene("overview");
+</script>
+</body></html>
