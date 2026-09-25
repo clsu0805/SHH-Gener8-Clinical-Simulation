@@ -41,7 +41,14 @@ nav{
   box-shadow:0 10px 30px rgba(0,0,0,.22)
 }
 .logo-mark span{font-size:20px}
+.nav-actions{display:flex;align-items:center;gap:14px}
 .nav-note{font-size:14px;color:var(--muted)}
+.admin-btn{
+  display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#eaf6ff;
+  border:1px solid rgba(143,197,255,.35);background:rgba(77,163,255,.12);
+  border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800
+}
+.admin-btn:hover{background:rgba(77,163,255,.22);border-color:rgba(143,197,255,.6)}
 .hero{
   display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,.7fr);
   gap:56px;align-items:center;padding:70px 0 56px
@@ -106,6 +113,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 46px;color:#86a7c6;font-s
   .hero-panel{max-width:620px}
   .section-head{align-items:flex-start;flex-direction:column}
   .nav-note{display:none}
+  .admin-btn{font-size:13px;padding:9px 11px}
 }
 </style>
 </head>
@@ -116,7 +124,10 @@ footer{border-top:1px solid var(--line);padding:28px 0 46px;color:#86a7c6;font-s
       <div class="logo-mark"><span>G8</span></div>
       <div>Gener8</div>
     </div>
-    <div class="nav-note">Friend Preview · Invited Review Only</div>
+    <div class="nav-actions">
+      <div class="nav-note">Friend Preview · Invited Review Only</div>
+      <a class="admin-btn" href="admin/index.html">後台管理 Dashboard →</a>
+    </div>
   </nav>
 
   <header class="hero">
