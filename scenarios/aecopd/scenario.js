@@ -31,7 +31,7 @@ function renderCenter(){center.innerHTML='';const b=document.createElement('div'
 function patientBackground(){return '<div class="eyebrow">Act 1｜Initial Assessment</div><h1>病人背景</h1><div class="card"><p>'+D.patient.background.map(esc).join('<br>')+'</p></div>';}
 function act1Controls(){const x=[['Vital Signs','ACT1_VITALS'],['ABG','ACT1_ABG'],['Oxygen Therapy','ACT1_OXYGEN'],['Lung Sound','ACT1_LUNG_SOUND'],['CXR','ACT1_CXR'],['Main Treatment','ACT1_TREATMENT']];return '<div class="controls">'+x.map(([l,s])=>'<button class="btn '+(state===s?'active':'')+'" data-state="'+s+'">'+l+'</button>').join('')+'</div>';}
 function evidenceCards(){const order=['vitals','abg','oxygen','lung','cxr'];return '<div class="eyebrow">Clinical Evidence Board</div><h2>Clinical Evidence Board</h2><p class="muted small">出現過的資料不消失；評估後持續累積。</p><div class="evidence-grid">'+order.filter(k=>evidence.has(k)).map(k=>{const x=D.act1.evidence[k];return '<div class="evidence-card"><h3>'+esc(x.title)+'</h3><p>'+x.lines.map(esc).join('\n')+'</p></div>';}).join('')+'</div>';}
-function addEvidence(s){const m={ACT1_VITALS:'vitals',ACT1_ABG:'abg',ACT1_OXYGEN:'oxygen',ACT1_LUNG_SOUND:'lung',ACT1_CXR:'cxr'};if(m[s])evidence.add(m[s]);}
+function addEvidence(s){const m={ACT1_VITALS:'vitals',ACT1_ABG:'abg',ACT1_OXYGEN:'oxygen',ACT1_CXR:'cxr'};if(m[s])evidence.add(m[s]);}
 function bindStates(){document.querySelectorAll('[data-state]').forEach(b=>b.onclick=()=>setState(b.dataset.state));}
 function renderAct1(){
   left.innerHTML=patientBackground()+act1Controls();
@@ -44,10 +44,20 @@ function renderAct1(){
       <button class="btn dark" data-a1lung="2">Bilateral basal crackles</button>
       <button class="btn dark" data-a1lung="3">Inspiratory stridor</button>
     </div><div id="a1lung-feedback" class="question-feedback">請先播放呼吸音再作答。</div></div>`;
+    right.innerHTML=evidenceCards()+'<div id="a1lung-right-feedback" class="lung-right-feedback" aria-live="polite"></div>';
     document.getElementById('play-act1-lung').onclick=()=>new Audio(M.lungSound).play().catch(()=>{document.getElementById('a1lung-feedback').textContent='音訊被瀏覽器阻擋，請再點一次播放。';});
     document.querySelectorAll('[data-a1lung]').forEach(b=>b.onclick=()=>{
-      const ok=b.dataset.a1lung==='1';b.classList.add(ok?'correct':'wrong');
-      document.getElementById('a1lung-feedback').textContent=ok?'✓ Bilateral expiratory wheezing':'✕ 請重新聽診並判斷。';
+      const ok=b.dataset.a1lung==='1';
+      b.classList.add(ok?'correct':'wrong');
+      if(ok){
+        evidence.add('lung');
+        document.getElementById('a1lung-feedback').textContent='✓ Bilateral expiratory wheezing';
+        right.innerHTML=evidenceCards()+'<div id="a1lung-right-feedback" class="lung-right-feedback correct-feedback">✓ 正確呼吸音已加入 Clinical Evidence Board</div>';
+      }else{
+        document.getElementById('a1lung-feedback').textContent='✕ 請重新聽診並判斷。';
+        const rf=document.getElementById('a1lung-right-feedback');
+        if(rf) rf.innerHTML='<div class="wrong-feedback-item">✕ '+esc(b.textContent)+'</div>';
+      }
     });
   }
 
@@ -109,6 +119,12 @@ function renderAct1Treatment(){
   }
 
   if(state==='ACT1_TREATMENT_SUMMARY'){
+    const correctMainTreatments=[
+      '維持呼吸道暢通，必要時抽痰',
+      '藥物治療',
+      '調整氧氣並密切監測 SpO₂',
+      '30 分鐘內重新評估呼吸狀況'
+    ];
     const summary=[
       'Venturi Mask 28%：controlled oxygen，目標 SpO₂ 88–92%',
       'Combivent 2.5 mL via nebulization：短效支氣管擴張',
@@ -117,7 +133,7 @@ function renderAct1Treatment(){
       'Airway clearance：鼓勵咳痰，必要時清除分泌物',
       '30 分鐘內重新評估並 repeat ABG'
     ];
-    left.innerHTML=act1TreatmentMenu()+'<div class="summary-panel"><h2>治療重點</h2><ul>'+summary.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
+    left.innerHTML='<div class="eyebrow">左牆｜主要處置</div><h1>正確主要處置</h1><div class="correct-treatment-list">'+correctMainTreatments.map(x=>'<div class="correct-treatment-item">✓ '+esc(x)+'</div>').join('')+'</div><div class="summary-panel"><h2>治療重點</h2><ul>'+summary.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
     right.innerHTML=act1OrderWall()+'<div class="selected-treatment-grid"><img src="assets/images/medication-options.webp" alt="Selected medication reference"><img src="assets/images/oxygen-options.webp" alt="Selected oxygen reference"></div><button id="to-act2" class="btn dark next-major">6 小時後：進入第二幕 →</button>';
     document.getElementById('to-act2').onclick=()=>setState('ACT2_OVERVIEW');
   }
@@ -151,7 +167,7 @@ function lung(){right.innerHTML=monitor(M.act2Monitor)+'<h2>Lung Sound</h2><butt
 function abg(){right.innerHTML=monitor(M.act2Monitor)+'<h2>ABG</h2><div class="badge-row">'+D.act2.abg.map(x=>'<span class="badge">'+esc(x)+'</span>').join('')+'</div><div class="option-grid" style="margin-top:16px">'+D.act2.abgOptions.map((x,i)=>'<button class="btn dark" data-abg="'+i+'">'+esc(x)+'</button>').join('')+'</div><div id="feedback" class="feedback">Interpret the ABG.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-abg]').forEach(b=>b.onclick=()=>{const ans=D.act2.abgOptions[+b.dataset.abg],ok=ans===D.act2.abgCorrect;b.classList.add(ok?'correct':'wrong');document.getElementById('feedback').textContent=ok?'✓ '+D.act2.abgCorrect:'✕ Re-integrate pH, PaCO₂ and HCO₃⁻.';});}
 function treatment(){txSelected.clear();right.innerHTML=monitor(M.act2Monitor)+'<h2>Main Treatment</h2><p class="small muted">請選擇目前優先處置。</p><div class="option-grid">'+D.act2.treatmentOptions.map((x,i)=>'<button class="btn dark" data-tx="'+i+'">'+esc(x.label)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the four core immediate treatments.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>selectTx(b,+b.dataset.tx));}
 function selectTx(btn,i){const o=D.act2.treatmentOptions[i];if(o.correct===true){txSelected.add(i);btn.classList.add('correct');}else if(o.correct==='followup'){btn.classList.add('active');document.getElementById('feedback').textContent='Follow-up ABG is an important reassessment step after NIV.';return;}else btn.classList.add('wrong');if(txSelected.size===4){document.getElementById('feedback').textContent='✓ Core treatment selections confirmed. Preparing NIV.';setTimeout(()=>setState('ACT2_TREATMENT_CONFIRMED'),900);}}
-function confirmed(){right.innerHTML=monitor(M.act2Monitor)+'<h2>主要處置｜正確處置確認</h2><div class="order-wall">'+D.act2.treatmentOptions.map(o=>'<div class="order">'+(o.correct===true?'✓ ':o.correct===false?'✕ ':'↻ ')+esc(o.label)+'</div>').join('')+'</div><div class="feedback">正確處置確認：準備啟動 NIV</div><button id="start-niv" class="btn dark next-major">▶ 啟動 NIV → 查看治療後狀態</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
+function confirmed(){const correct=D.act2.treatmentOptions.filter(o=>o.correct===true);right.innerHTML=monitor(M.act2Monitor)+'<h2>主要處置｜正確處置確認</h2><div class="order-wall">'+correct.map(o=>'<div class="order correct-order">✓ '+esc(o.label)+'</div>').join('')+'</div><div class="feedback">正確處置確認：準備啟動 NIV</div><button id="start-niv" class="btn dark next-major">▶ 啟動 NIV → 查看治療後狀態</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
 function niv(){right.innerHTML='<div class="eyebrow">NIV 後動態監測</div>'+monitor(M.nivMonitor)+'<h2>Confirmed orders</h2><div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div><div class="completion-banner">AECOPD Scenario v1.0｜NIV initiated｜病人安靜休息，呼吸逐步平穩</div>';mountMonitor(M.nivMonitor);}
 function setState(s){state=s;addEvidence(s);renderCenter();if(s.startsWith('ACT1_'))renderAct1();else{left.innerHTML=act2Left(s==='ACT2_NIV_RESPONSE');if(s==='ACT2_OVERVIEW')overview();if(s==='ACT2_LUNG_SOUND')lung();if(s==='ACT2_ABG')abg();if(s==='ACT2_TREATMENT')treatment();if(s==='ACT2_TREATMENT_CONFIRMED')confirmed();if(s==='ACT2_NIV_RESPONSE')niv();}updateStepUI();}
 
