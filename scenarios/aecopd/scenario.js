@@ -3,23 +3,13 @@ const D=window.AECOPD_DATA,M=window.MEDIA_MANIFEST;
 const left=document.getElementById('left-wall'),center=document.getElementById('center-wall'),right=document.getElementById('right-wall'),stage=document.getElementById('stage');
 let state=D.states.ACT1_START,evidence=new Set(),act1Orders=new Set(),txSelected=new Set();
 let sessionMeta=null;
-const satisfactionQuestionSets={
-  A:[
-    '我能辨識 AECOPD 病人惡化警訊。',
-    '我能整合臨床資料進行判斷。',
-    '我能判斷治療處置的優先順序。',
-    '沉浸式情境有助於提升學習投入。',
-    '我對本次教案整體感到滿意。'
-  ],
-  B:[
-    '我能辨識 AECOPD 病人惡化警訊。',
-    '我能整合生命徵象、呼吸音、CXR 與 ABG 進行判斷。',
-    '我能判斷治療處置的優先順序。',
-    '三面牆情境與病人影音有助於學習。',
-    '我對 AECOPD Gener8 教案整體感到滿意。'
-  ]
-};
-let selectedSurveyVersion='A';
+const satisfactionQuestions=[
+  '教案幫助我學習辨識 AECOPD 病人惡化警訊。',
+  '我能整合生命徵象、呼吸音、CXR 與 ABG 進行判斷。',
+  '我能判斷治療處置的優先順序。',
+  '三面牆情境與病人影音有助於學習。',
+  '我對 AECOPD Gener8 教案整體感到滿意。'
+];
 let lungAudio=null;
 let patientSoundEnabled=localStorage.getItem('gener8PatientSound')==='on';
 const sensitivityLevels=['low','normal','high'];
@@ -234,8 +224,7 @@ function generateSessionCode(){
 function renderSurveyQuestions(){
   const root=document.getElementById('survey-questions');
   if(!root)return;
-  const questions=satisfactionQuestionSets[selectedSurveyVersion];
-  root.innerHTML=questions.map((q,i)=>'<div class="survey-question"><div class="qtext">'+(i+1)+'. '+esc(q)+'</div><div class="likert-row">'+[1,2,3,4,5].map(v=>'<label class="likert-option"><input type="radio" name="q'+(i+1)+'" value="'+v+'"><span>'+v+'</span></label>').join('')+'</div></div>').join('');
+  root.innerHTML=satisfactionQuestions.map((q,i)=>'<div class="survey-question"><div class="qtext">'+(i+1)+'. '+esc(q)+'</div><div class="likert-row">'+[1,2,3,4,5].map(v=>'<label class="likert-option"><input type="radio" name="q'+(i+1)+'" value="'+v+'"><span>'+v+'</span></label>').join('')+'</div></div>').join('');
 }
 function initSessionForm(){
   const code=document.getElementById('session-code');
@@ -262,23 +251,17 @@ function openSatisfactionSurvey(){
   document.getElementById('survey-overlay').classList.remove('hidden');
 }
 function initSurvey(){
-  document.querySelectorAll('[data-survey-version]').forEach(b=>b.onclick=()=>{
-    selectedSurveyVersion=b.dataset.surveyVersion;
-    document.querySelectorAll('[data-survey-version]').forEach(x=>x.classList.toggle('active',x===b));
-    renderSurveyQuestions();
-    document.getElementById('survey-error').textContent='';
-  });
   document.getElementById('survey-form').onsubmit=e=>{
     e.preventDefault();
-    const questions=satisfactionQuestionSets[selectedSurveyVersion];const answers=questions.map((_,i)=>Number(document.querySelector('input[name="q'+(i+1)+'"]:checked')?.value||0));
+    const questions=satisfactionQuestions;const answers=questions.map((_,i)=>Number(document.querySelector('input[name="q'+(i+1)+'"]:checked')?.value||0));
     const err=document.getElementById('survey-error');
     if(answers.some(v=>!v)){err.textContent='請完成 5 題後再送出。';return;}
     err.textContent='';
     const average=answers.reduce((a,b)=>a+b,0)/answers.length;
-    const payload={session:sessionMeta||JSON.parse(localStorage.getItem('gener8AECOPDSession')||'null'),surveyVersion:selectedSurveyVersion,questions,answers,average:Number(average.toFixed(2)),submittedAt:new Date().toISOString()};
+    const payload={session:sessionMeta||JSON.parse(localStorage.getItem('gener8AECOPDSession')||'null'),questions,answers,average:Number(average.toFixed(2)),submittedAt:new Date().toISOString()};
     localStorage.setItem('gener8AECOPDLastSurvey',JSON.stringify(payload));
     document.getElementById('survey-overlay').classList.add('hidden');
-    document.getElementById('survey-summary').innerHTML='<strong>參加代號：</strong>'+esc(payload.session?.code||'—')+'<br><strong>問卷版本：</strong>'+esc(payload.surveyVersion)+'<br><strong>5 題平均：</strong>'+payload.average+' / 5';
+    document.getElementById('survey-summary').innerHTML='<strong>參加代號：</strong>'+esc(payload.session?.code||'—')+'<br><strong>5 題平均：</strong>'+payload.average+' / 5';
     document.getElementById('survey-thankyou').classList.remove('hidden');
   };
   document.getElementById('close-thankyou').onclick=()=>document.getElementById('survey-thankyou').classList.add('hidden');
