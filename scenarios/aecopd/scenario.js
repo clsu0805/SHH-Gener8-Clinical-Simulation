@@ -85,7 +85,10 @@ function updatePatientSoundUI(){
     if(patientSoundEnabled)v.play().catch(()=>{});
   });
   const o=document.getElementById('patient-sound-overlay');
-  if(o)o.remove();
+  if(o){
+    o.classList.toggle('on',patientSoundEnabled);
+    o.textContent=patientSoundEnabled?'🔊 病人說話聲音已開啟':'▶ 啟動病人說話聲音';
+  }
 }
 function togglePatientSound(){
   patientSoundEnabled=!patientSoundEnabled;
@@ -104,6 +107,14 @@ function renderCenter(force=false){
   const b=document.createElement('div');
   b.className='patient-box';
   b.appendChild(createVideo(scene.src));
+  if(String(state||'').startsWith('ACT1_')){
+    const o=document.createElement('button');
+    o.id='patient-sound-overlay';
+    o.className='patient-sound-overlay';
+    o.type='button';
+    o.onclick=togglePatientSound;
+    b.appendChild(o);
+  }
   center.appendChild(b);
   updatePatientSoundUI();
 }
@@ -351,7 +362,7 @@ function startTeamScenario(){
   overlay.classList.add('hidden');
   overlay.style.display='none';
   document.body.classList.remove('prelogin');
-  patientSoundEnabled=true;
+  patientSoundEnabled=false;
   centerSceneKey=null;
   setState('ACT1_START');
 }
