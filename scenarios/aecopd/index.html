@@ -8,16 +8,21 @@
 </head>
 <body class="prelogin">
 <div id="login-overlay" class="session-overlay" role="dialog" aria-modal="true" aria-labelledby="login-title">
-  <div class="session-card">
+  <div class="session-card team-session-card">
     <div class="session-brand">Gener8 Clinical Simulation</div>
-    <h1 id="login-title">AECOPD Scenario v1.0｜參與資料</h1>
-    <p class="session-subtitle">開始教案前，請先建立本次教學活動代號與參與資料。</p>
+    <div class="team-mode-badge">TEAM PERFORMANCE</div>
+    <h1 id="login-title">AECOPD Scenario v1.0｜團隊登入</h1>
+    <p class="session-subtitle">本次教案採團隊作答模式，系統將記錄團隊的解題歷程、作答順序、耗時與整體表現。</p>
     <form id="session-form">
       <div class="form-grid">
         <label class="field full">
-          <span>參加代號</span>
+          <span>Team 參加代號</span>
           <div class="code-row"><input id="session-code" name="sessionCode" type="text" readonly><button type="button" id="regen-code" class="mini-btn">重新產生</button></div>
-          <small>格式：G8-AECOPD-日期-三碼，例如 G8-AECOPD-0925-381</small>
+          <small>格式：G8-TEAM-AECOPD-日期-三碼，例如 G8-TEAM-AECOPD-0925-381</small>
+        </label>
+        <label class="field">
+          <span>團隊名稱</span>
+          <input id="team-name" name="teamName" type="text" maxlength="30" placeholder="例如：Team A">
         </label>
         <label class="field">
           <span>參與人數</span>
@@ -29,37 +34,26 @@
             <option value="5">5 人</option>
           </select>
         </label>
-        <label class="field">
-          <span>身份</span>
-          <select id="participant-role" name="participantRole" required>
-            <option value="">請選擇</option>
-            <option>臨床教師</option>
-            <option>西醫PGY</option>
-            <option>住院醫師</option>
-            <option>醫事PGY</option>
-            <option>醫學生</option>
-            <option>醫事實習生</option>
-          </select>
-        </label>
       </div>
-      <fieldset class="profession-group">
-        <legend>參與職類（可複選）</legend>
-        <div class="profession-grid">
-          <label><input type="checkbox" name="profession" value="西醫">西醫</label>
-          <label><input type="checkbox" name="profession" value="護理">護理</label>
-          <label><input type="checkbox" name="profession" value="呼吸治療">呼吸治療</label>
-          <label><input type="checkbox" name="profession" value="藥學">藥學</label>
-          <label><input type="checkbox" name="profession" value="放射">放射</label>
-          <label><input type="checkbox" name="profession" value="醫檢">醫檢</label>
-          <label><input type="checkbox" name="profession" value="物治">物治</label>
-          <label><input type="checkbox" name="profession" value="職治">職治</label>
-          <label><input type="checkbox" name="profession" value="語言">語言</label>
-          <label><input type="checkbox" name="profession" value="營養">營養</label>
-          <label><input type="checkbox" name="profession" value="臨心">臨心</label>
+
+      <div class="team-member-section">
+        <div class="team-member-heading">
+          <div>
+            <h2>團隊成員組成</h2>
+            <p>請依參與人數填寫每位成員的職類與身份；不需輸入姓名。</p>
+          </div>
+          <span id="team-count-badge">1 人團隊</span>
         </div>
-      </fieldset>
+        <div id="team-members"></div>
+      </div>
+
+      <div class="team-performance-note">
+        <strong>本場紀錄方式：</strong>
+        <span>以 Team Performance 為主，紀錄整組的選項順序、正確率、各題耗時、總分與滿意度。</span>
+      </div>
+
       <div id="login-error" class="form-error" aria-live="polite"></div>
-      <button type="submit" class="primary-form-btn">進入 AECOPD 教案 →</button>
+      <button type="submit" class="primary-form-btn">開始 Team Performance →</button>
     </form>
   </div>
 </div>
