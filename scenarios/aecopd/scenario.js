@@ -219,7 +219,23 @@ function moveStep(delta){const i=instructorSteps.indexOf(state);if(i<0)return;co
 function generateSessionCode(){
   const d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
   const n=Math.floor(100+Math.random()*900);
-  return 'G8-AECOPD-'+mm+dd+'-'+n;
+  return 'G8-TEAM-AECOPD-'+mm+dd+'-'+n;
+}
+const teamProfessions=['西醫','護理','呼吸治療','藥學','放射','醫檢','物治','職治','語言','營養','臨心'];
+const teamRoles=['臨床教師','西醫PGY','住院醫師','醫事PGY','醫學生','醫事實習生'];
+function renderTeamMembers(){
+  const root=document.getElementById('team-members');
+  const count=Number(document.getElementById('participant-count')?.value||1);
+  const badge=document.getElementById('team-count-badge');
+  if(badge)badge.textContent=count+' 人團隊';
+  if(!root)return;
+  root.innerHTML=Array.from({length:count},(_,i)=>'<div class="team-member-row">'+
+    '<div class="member-number">成員 '+(i+1)+'</div>'+
+    '<label class="field"><span>職類</span><select class="member-profession" data-member="'+i+'" required><option value="">請選擇職類</option>'+
+    teamProfessions.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></label>'+
+    '<label class="field"><span>身份</span><select class="member-role" data-member="'+i+'" required><option value="">請選擇身份</option>'+
+    teamRoles.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></label>'+
+    '</div>').join('');
 }
 function renderSurveyQuestions(){
   const root=document.getElementById('survey-questions');
@@ -228,19 +244,37 @@ function renderSurveyQuestions(){
 }
 function initSessionForm(){
   const code=document.getElementById('session-code');
+  const countSelect=document.getElementById('participant-count');
   if(code&&!code.value)code.value=generateSessionCode();
   document.getElementById('regen-code').onclick=()=>{code.value=generateSessionCode();};
+  countSelect.onchange=renderTeamMembers;
+  renderTeamMembers();
   document.getElementById('session-form').onsubmit=e=>{
     e.preventDefault();
-    const professions=[...document.querySelectorAll('input[name="profession"]:checked')].map(x=>x.value);
-    const role=document.getElementById('participant-role').value;
-    const count=Number(document.getElementById('participant-count').value);
+    const count=Number(countSelect.value);
     const err=document.getElementById('login-error');
-    if(!professions.length){err.textContent='請至少選擇 1 個參與職類。';return;}
-    if(!role){err.textContent='請選擇身份。';return;}
     if(!Number.isFinite(count)||count<1||count>5){err.textContent='參與人數請選擇 1–5 人。';return;}
+    const professionEls=[...document.querySelectorAll('.member-profession')];
+    const roleEls=[...document.querySelectorAll('.member-role')];
+    const members=professionEls.map((p,i)=>({
+      memberNo:i+1,
+      profession:p.value,
+      role:roleEls[i]?.value||''
+    }));
+    if(members.some(m=>!m.profession||!m.role)){err.textContent='請完成每位團隊成員的職類與身份。';return;}
     err.textContent='';
-    sessionMeta={code:code.value,count,professions,role,startedAt:new Date().toISOString()};
+    const teamName=(document.getElementById('team-name').value||'').trim()||'Team';
+    sessionMeta={
+      mode:'team',
+      performanceUnit:'team',
+      code:code.value,
+      teamName,
+      count,
+      members,
+      professions:[...new Set(members.map(m=>m.profession))],
+      roles:[...new Set(members.map(m=>m.role))],
+      startedAt:new Date().toISOString()
+    };
     localStorage.setItem('gener8AECOPDSession',JSON.stringify(sessionMeta));
     document.getElementById('login-overlay').classList.add('hidden');
     document.body.classList.remove('prelogin');
