@@ -1,6 +1,6 @@
-# SHH Gener8 Clinical Simulation
+# Immersive Clinical Simulation & Situation Awareness Platform
 
-雙和醫院 Gener8 沉浸式臨床情境教案網站。
+Gener8 沉浸式臨床情境覺察教案網站。
 
 ## 系統定位
 - **Gener8 Engine**：負責 5760×1080 三面牆、互動、狀態切換、全螢幕與未來的影片/音訊/monitor 元件。
