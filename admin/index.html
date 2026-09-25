@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Gener8 Dashboard｜後台管理</title>
+<style>
+:root{
+  --bg:#f3f6f9;--panel:#fff;--nav:#08233f;--nav2:#0d365d;--text:#15324b;--muted:#6b7f90;
+  --line:#dbe5ec;--blue:#146ea8;--blue2:#e9f4fb;--green:#23865a;--amber:#a36b00;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Noto Sans TC","Microsoft JhengHei","Segoe UI",Arial,sans-serif}
+.topbar{background:linear-gradient(135deg,var(--nav),var(--nav2));color:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;position:sticky;top:0;z-index:10}
+.brand{display:flex;align-items:center;gap:13px}.mark{width:42px;height:42px;border-radius:12px;background:#3e9be3;display:grid;place-items:center;font-weight:900}.brand h1{font-size:20px;margin:0}.brand p{font-size:12px;color:#bed8ed;margin:3px 0 0}
+.top-actions{display:flex;gap:10px;align-items:center}.top-actions a{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.24);padding:9px 12px;border-radius:10px;font-size:13px;font-weight:800}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 78px)}
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:20px 14px}
+.side-title{font-size:11px;font-weight:900;color:#90a1ae;letter-spacing:.12em;margin:8px 10px 10px}
+.side-link{display:block;padding:11px 12px;margin:4px 0;border-radius:10px;color:#355169;text-decoration:none;font-weight:700;font-size:14px}
+.side-link.active{background:#eaf4fb;color:#0c5f94}
+.content{padding:26px 30px 42px;min-width:0}
+.header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:20px}
+.header-row h2{font-size:30px;margin:0 0 5px}.header-row p{margin:0;color:var(--muted)}
+.architecture{background:#0d365d;color:#fff;border-radius:16px;padding:15px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.arch-flow{font-weight:900;letter-spacing:.01em}.api-status{font-size:12px;padding:7px 10px;border-radius:999px;background:rgba(255,209,102,.14);border:1px solid rgba(255,209,102,.35);color:#ffe59c;white-space:nowrap}
+.filters{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:12px;margin-bottom:18px}
+.field label{display:block;font-size:12px;font-weight:900;color:#657b8e;margin-bottom:6px}.field select,.field input{width:100%;padding:10px 11px;border:1px solid #cfdde6;border-radius:9px;background:#fff;color:#173951}
+.filter-actions{display:flex;gap:8px;align-items:end}.action{border:0;border-radius:9px;padding:10px 13px;font-weight:900;cursor:pointer}.action.primary{background:#0d6fa8;color:#fff}.action.secondary{background:#edf3f7;color:#355169}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:18px}.kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}.kpi .label{font-size:13px;color:#748798;font-weight:800}.kpi .value{font-size:29px;font-weight:900;margin-top:8px;color:#123b60}.kpi .hint{font-size:11px;color:#96a4af;margin-top:5px}
+.grid2{display:grid;grid-template-columns:1.05fr .95fr;gap:16px;margin-bottom:16px}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}.panel h3{margin:0 0 4px;font-size:18px}.panel-sub{font-size:12px;color:#8293a0;margin-bottom:16px}
+.empty{min-height:230px;display:grid;place-items:center;border:1px dashed #cbd9e2;border-radius:12px;background:#fafcfd;text-align:center;color:#8395a4;padding:20px}.empty strong{display:block;color:#536e83;margin-bottom:5px}
+.table-wrap{overflow:auto}.data-table{width:100%;border-collapse:collapse;font-size:13px}.data-table th,.data-table td{text-align:left;padding:11px 10px;border-bottom:1px solid #e8eef2;white-space:nowrap}.data-table th{color:#718596;font-size:12px;background:#f8fafc}
+.export-row{display:flex;gap:10px;flex-wrap:wrap}.export-btn{border:1px solid #bcd1de;background:#fff;color:#174768;border-radius:10px;padding:10px 13px;font-weight:900}.export-btn[disabled]{opacity:.5;cursor:not-allowed}
+.note{margin-top:14px;padding:12px 14px;border-left:4px solid #e0a42b;background:#fff8e9;color:#75511a;border-radius:9px;font-size:13px;line-height:1.5}
+@media(max-width:1100px){.layout{grid-template-columns:1fr}.sidebar{display:none}.filters{grid-template-columns:repeat(3,1fr)}.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.content{padding:18px}.filters{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.architecture{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="mark">G8</div><div><h1>Gener8 後台管理 Dashboard</h1><p>Clinical Simulation Learning Analytics</p></div></div>
+  <div class="top-actions"><a href="../index.html">← 回首頁</a></div>
+</header>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="side-title">MANAGEMENT</div>
+    <a class="side-link active" href="#overview">首頁總覽</a>
+    <a class="side-link" href="#sessions">各場次明細</a>
+    <a class="side-link" href="#learning">Team / 學習成效</a>
+    <a class="side-link" href="#questions">題項通過率</a>
+    <a class="side-link" href="#satisfaction">滿意度</a>
+    <a class="side-link" href="#export">統計與匯出</a>
+    <div class="side-title" style="margin-top:24px">SYSTEM</div>
+    <a class="side-link" href="#architecture">系統架構</a>
+  </aside>
+
+  <main class="content">
+    <div class="header-row" id="overview">
+      <div><h2>首頁總覽</h2><p>AECOPD Scenario v1.0｜Team Performance Learning Analytics</p></div>
+    </div>
+
+    <section class="architecture" id="architecture">
+      <div class="arch-flow">Gener8 Frontend → FastAPI → PostgreSQL → Gener8 Dashboard → Excel / Power BI</div>
+      <div class="api-status">API / Database 尚未連線</div>
+    </section>
+
+    <section class="filters">
+      <div class="field"><label>年度</label><select><option>2026</option><option>2027</option></select></div>
+      <div class="field"><label>月份</label><select><option>全部月份</option><option>09 月</option><option>10 月</option></select></div>
+      <div class="field"><label>開始日期</label><input type="date" value="2026-01-01"></div>
+      <div class="field"><label>結束日期</label><input type="date" value="2026-12-31"></div>
+      <div class="field"><label>教案</label><select><option>AECOPD v1.0</option></select></div>
+      <div class="filter-actions"><button class="action primary">套用篩選</button><button class="action secondary">清除</button></div>
+    </section>
+
+    <section class="kpis">
+      <div class="kpi"><div class="label">參加人次</div><div class="value">—</div><div class="hint">Participants</div></div>
+      <div class="kpi"><div class="label">參加職類人數</div><div class="value">—</div><div class="hint">Professions</div></div>
+      <div class="kpi"><div class="label">平均分數</div><div class="value">—</div><div class="hint">Average score</div></div>
+      <div class="kpi"><div class="label">平均過關時間</div><div class="value">—</div><div class="hint">Completion time</div></div>
+      <div class="kpi"><div class="label">平均通過率</div><div class="value">—</div><div class="hint">Question pass rate</div></div>
+      <div class="kpi"><div class="label">整體滿意度</div><div class="value">—</div><div class="hint">5-point Likert</div></div>
+    </section>
+
+    <section class="grid2">
+      <div class="panel" id="questions"><h3>各題項通過率</h3><div class="panel-sub">Vital Signs / ABG / Oxygen / Lung Sound / CXR / Treatment / NIV</div><div class="empty"><div><strong>等待 PostgreSQL 統計資料</strong>FastAPI 連線後依年度、月份及日期區間自動產生圖表。</div></div></div>
+      <div class="panel"><h3>參加職類分布</h3><div class="panel-sub">西醫、護理、呼吸治療、藥學等 Team composition</div><div class="empty"><div><strong>尚無中央資料</strong>目前 AECOPD 前端資料仍以瀏覽器本機紀錄為主。</div></div></div>
+    </section>
+
+    <section class="panel" id="sessions" style="margin-bottom:16px">
+      <h3>各場次明細</h3><div class="panel-sub">年／月／日／時間、Team 參加代號、人數、分數、完成時間、滿意度</div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>日期</th><th>時間</th><th>Team 參加代號</th><th>人數</th><th>職類</th><th>平均分數</th><th>過關時間</th><th>滿意度</th></tr></thead><tbody><tr><td colspan="8" style="text-align:center;color:#8999a5;padding:28px">FastAPI / PostgreSQL 連線後顯示所有場次</td></tr></tbody></table></div>
+    </section>
+
+    <section class="grid2">
+      <div class="panel" id="learning"><h3>Team / 學習成效</h3><div class="panel-sub">解題選項順序、各題耗時、嘗試次數、分數</div><div class="empty"><div><strong>Learning Trace</strong>未來可點入單一 Team 查看完整時間軸與作答歷程。</div></div></div>
+      <div class="panel" id="satisfaction"><h3>滿意度</h3><div class="panel-sub">5 題學習滿意度與年度／月份趨勢</div><div class="empty"><div><strong>5-item Satisfaction</strong>資料庫連線後顯示平均值、各題分布與趨勢。</div></div></div>
+    </section>
+
+    <section class="panel" id="export" style="margin-top:16px">
+      <h3>統計資料下載與一鍵匯出</h3>
+      <div class="panel-sub">依目前篩選條件產生統計資料、Excel，並預留 Power BI 串接。</div>
+      <div class="export-row">
+        <button class="export-btn" disabled>匯出 Excel</button>
+        <button class="export-btn" disabled>下載統計摘要</button>
+        <button class="export-btn" disabled>Power BI Dataset</button>
+      </div>
+      <div class="note">目前這一頁已完成 Dashboard 前端骨架，但尚未建立正式 FastAPI 與 PostgreSQL，因此 KPI、圖表、場次明細與 Excel 匯出先顯示為待連線狀態；不會用假資料冒充正式統計。</div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
