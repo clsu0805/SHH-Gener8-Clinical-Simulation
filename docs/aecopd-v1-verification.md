@@ -73,8 +73,47 @@ The release must not be approved until all of these are verified from the GitHub
 - [x] Follow-up ABG remains a post-NIV reassessment step.
 - [x] NIV response retains RR 18–20/min and SpO2 90–93%.
 
-## Browser verification
+## Local playable-package verification
 
-Browser verification remains **pending** until the required media assets are present in the repository/package served to the browser.
+A complete local package containing the original embedded media was verified before repository-media upload.
 
-Do not merge this feature branch to `main` or tag `v1.0` until the media-fidelity gate is fully checked.
+Results:
+
+- Static regression test: **PASS**
+- Local HTTP scenario page: **200**
+- All nine MP4 files: **valid and HTTP 200**
+- Respiratory M4A: **valid and HTTP 200**
+- No PNG/JPG patient mapping in media manifest
+- HTML/JS uses active HTML5 video elements for patient states
+
+Verified durations:
+- media1.mp4 — 10.005 s
+- media2.mp4 — 10.005 s
+- media3.mp4 — 10.000 s
+- media5.mp4 — 8.000 s
+- media6.mp4 — 6.000 s
+- media7.mp4 — 8.000 s
+- media8.mp4 — 6.000 s
+- media9.mp4 — 7.000 s
+- media10.mp4 — 6.000 s
+- media4.m4a — 16.597 s
+
+SHA-256 source-media fingerprints:
+- media1.mp4 — 6fe5a25591e88d825b54d0ec2e701a7ac0574c44fb0df866cf6211a87906ffd8
+- media2.mp4 — 2e9429327dab8780c8c144e8e7a951e656ab073231ae9ae8850b219b5aa3276b
+- media3.mp4 — e0c7842dacc3d7b6199d5df41973d8effd8764d4c4aca02e9f231359e9eee9ac
+- media4.m4a — f3d34752907814be320717a8e61aa8234fcd7577781d1c2da492b6a155063bfc
+- media5.mp4 — 49bc31976bc844c442967d8c01ee41158e7ae71180ecb06a0b66c0b083911cec
+- media6.mp4 — d13c2b48803debac4b9369f10fe93a037d9bfd98c1fcc6d50020754f17e726ae
+- media7.mp4 — 407e007f90c2630ead622c71f050d7355d68db3b650d96d49c207a78d2e6e4cb
+- media8.mp4 — 21c9fe39f437d37ff7b66bed62a57ce6eb40d5f4d0dc6d1ec2948bdd923b6ebb
+- media9.mp4 — 14014d9538859727c96a24670448410d71dc1db09251f9a01d02308959bd72b5
+- media10.mp4 — 30131c10fda4d629c28b9840a01133a4f14c6c8588bd7c9cb165958c96f32ed1
+
+## GitHub-hosted browser verification
+
+Repository-hosted playback remains pending only until these verified binary assets are placed under:
+- scenarios/aecopd/assets/video/
+- scenarios/aecopd/assets/audio/
+
+After upload, compare the repository files against the SHA-256 fingerprints above and then complete the remaining media-fidelity checkboxes.
