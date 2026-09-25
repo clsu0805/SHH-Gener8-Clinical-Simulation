@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gener8
+      POSTGRES_USER: gener8
+      POSTGRES_PASSWORD: change-me
+    volumes:
+      - gener8_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gener8 -d gener8"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://gener8:change-me@db:5432/gener8
+      CORS_ORIGINS: https://clsu0805.github.io,http://localhost:5500,http://127.0.0.1:5500
+      ADMIN_TOKEN: change-me-before-production
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  gener8_postgres_data:
