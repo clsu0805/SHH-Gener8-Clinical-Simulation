@@ -6,7 +6,79 @@
 <title>AECOPD Scenario v1.0 · Gener8</title>
 <link rel="stylesheet" href="scenario.css">
 </head>
-<body>
+<body class="prelogin">
+<div id="login-overlay" class="session-overlay" role="dialog" aria-modal="true" aria-labelledby="login-title">
+  <div class="session-card">
+    <div class="session-brand">Gener8 Clinical Simulation</div>
+    <h1 id="login-title">AECOPD Scenario v1.0｜參與資料</h1>
+    <p class="session-subtitle">開始教案前，請先建立本次教學活動代號與參與資料。</p>
+    <form id="session-form">
+      <div class="form-grid">
+        <label class="field full">
+          <span>活動代號</span>
+          <div class="code-row"><input id="session-code" name="sessionCode" type="text" readonly><button type="button" id="regen-code" class="mini-btn">重新產生</button></div>
+          <small>格式：G8-AECOPD-日期-三碼，例如 G8-AECOPD-0925-381</small>
+        </label>
+        <label class="field">
+          <span>參與人數</span>
+          <input id="participant-count" name="participantCount" type="number" min="1" max="99" value="1" required>
+        </label>
+        <label class="field">
+          <span>身份</span>
+          <select id="participant-role" name="participantRole" required>
+            <option value="">請選擇</option>
+            <option>臨床教師</option>
+            <option>西醫PGY</option>
+            <option>住院醫師</option>
+            <option>醫事PGY</option>
+          </select>
+        </label>
+      </div>
+      <fieldset class="profession-group">
+        <legend>參與職類（可複選）</legend>
+        <div class="profession-grid">
+          <label><input type="checkbox" name="profession" value="西醫">西醫</label>
+          <label><input type="checkbox" name="profession" value="護理">護理</label>
+          <label><input type="checkbox" name="profession" value="呼吸治療">呼吸治療</label>
+          <label><input type="checkbox" name="profession" value="藥學">藥學</label>
+          <label><input type="checkbox" name="profession" value="放射">放射</label>
+          <label><input type="checkbox" name="profession" value="醫檢">醫檢</label>
+          <label><input type="checkbox" name="profession" value="物治">物治</label>
+          <label><input type="checkbox" name="profession" value="職治">職治</label>
+          <label><input type="checkbox" name="profession" value="語言">語言</label>
+          <label><input type="checkbox" name="profession" value="營養">營養</label>
+          <label><input type="checkbox" name="profession" value="臨心">臨心</label>
+        </div>
+      </fieldset>
+      <div id="login-error" class="form-error" aria-live="polite"></div>
+      <button type="submit" class="primary-form-btn">進入 AECOPD 教案 →</button>
+    </form>
+  </div>
+</div>
+
+<div id="survey-overlay" class="session-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="survey-title">
+  <div class="session-card survey-card">
+    <div class="session-brand">Gener8 Learning Feedback</div>
+    <h1 id="survey-title">AECOPD 教案學習滿意度</h1>
+    <p class="session-subtitle">請依本次學習經驗評分：1＝非常不同意，5＝非常同意。</p>
+    <form id="survey-form">
+      <div id="survey-questions"></div>
+      <div id="survey-error" class="form-error" aria-live="polite"></div>
+      <button type="submit" class="primary-form-btn">送出學習滿意度</button>
+    </form>
+  </div>
+</div>
+
+<div id="survey-thankyou" class="session-overlay hidden" role="dialog" aria-modal="true">
+  <div class="session-card thankyou-card">
+    <div class="session-brand">Gener8</div>
+    <h1>謝謝您的回饋</h1>
+    <p>本次 AECOPD Scenario v1.0 已完成。</p>
+    <div id="survey-summary"></div>
+    <button id="close-thankyou" class="primary-form-btn">回到教案</button>
+  </div>
+</div>
+
 <div id="viewport"><main id="stage" aria-label="Gener8 three-wall stage">
 <section id="left-wall" class="wall"></section>
 <section id="center-wall" class="wall center"></section>
