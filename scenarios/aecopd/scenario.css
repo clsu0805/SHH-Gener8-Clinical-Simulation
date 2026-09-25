@@ -59,3 +59,19 @@ body[data-sensitivity="high"]{
 }
 #sensitivity-btn[data-level="high"]{border-color:#52d273;color:#c8f6d3}
 #sensitivity-btn[data-level="low"]{border-color:#ffd166;color:#ffe6a3}
+
+/* AECOPD v1.0 source-deck visual/question fidelity */
+.patient-box{position:relative}
+.patient-sound-overlay{
+  position:absolute;left:50%;bottom:54px;transform:translateX(-50%);
+  z-index:4;padding:16px 26px;border-radius:16px;border:2px solid rgba(255,255,255,.7);
+  background:rgba(2,9,19,.82);color:#fff;font-size:25px;font-weight:800;cursor:pointer
+}
+.patient-sound-overlay.on{background:rgba(16,110,65,.88);border-color:#78e4a2}
+.question-panel{margin-top:18px;padding:18px;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid rgba(143,197,255,.22)}
+.question-panel h3{margin:0 0 12px}
+.question-panel .option-grid .btn{font-size:24px;min-height:64px;padding:12px}
+.question-feedback{font-size:22px;margin-top:10px;color:#dcecff}
+.teaching-image{display:block;width:100%;max-height:280px;object-fit:contain;background:#fff;border-radius:14px;margin:10px 0 14px}
+.cxr-image{display:block;width:330px;max-width:100%;height:220px;object-fit:contain;background:#fff;border-radius:12px;margin:10px auto 14px}
+#patient-sound-btn[data-on="true"]{border-color:#52d273;color:#c8f6d3}
