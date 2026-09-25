@@ -68,7 +68,7 @@ function renderCenter(){center.innerHTML='';const b=document.createElement('div'
 function patientBackground(){return '<div class="eyebrow">Act 1｜Initial Assessment</div><h1>病人背景</h1><div class="card"><p>'+D.patient.background.map(esc).join('<br>')+'</p></div>';}
 function act1Controls(){const x=[['Vital Signs','ACT1_VITALS'],['ABG','ACT1_ABG'],['Oxygen Therapy','ACT1_OXYGEN'],['Lung Sound','ACT1_LUNG_SOUND'],['CXR','ACT1_CXR'],['Main Treatment','ACT1_TREATMENT']];return '<div class="controls">'+x.map(([l,s])=>'<button class="btn '+(state===s?'active':'')+'" data-state="'+s+'">'+l+'</button>').join('')+'</div>';}
 function evidenceCards(){const order=['vitals','abg','oxygen','lung','cxr'];return '<div class="eyebrow">Clinical Evidence Board</div><h2>Clinical Evidence Board</h2><p class="muted small">出現過的資料不消失；評估後持續累積。</p><div class="evidence-grid">'+order.filter(k=>evidence.has(k)).map(k=>{const x=D.act1.evidence[k];return '<div class="evidence-card"><h3>'+esc(x.title)+'</h3><p>'+x.lines.map(esc).join('\n')+'</p></div>';}).join('')+'</div>';}
-function addEvidence(s){const m={ACT1_VITALS:'vitals',ACT1_ABG:'abg',ACT1_OXYGEN:'oxygen',ACT1_CXR:'cxr'};if(m[s])evidence.add(m[s]);}
+function addEvidence(s){const m={ACT1_VITALS:'vitals',ACT1_ABG:'abg',ACT1_OXYGEN:'oxygen'};if(m[s])evidence.add(m[s]);}
 function bindStates(){document.querySelectorAll('[data-state]').forEach(b=>b.onclick=()=>setState(b.dataset.state));}
 function renderAct1(){
   left.innerHTML=patientBackground()+act1Controls();
@@ -99,15 +99,25 @@ function renderAct1(){
   }
 
   if(state==='ACT1_CXR'){
-    left.innerHTML+=`<div class="question-panel"><h3>CXR 判讀題</h3><img class="cxr-image" src="assets/images/cxr-source.webp" alt="Chest X-ray"><p class="small muted">Please select the finding that best describes this chest X-ray.</p><div class="option-grid">
+    left.innerHTML+=`<div class="question-panel"><h3>CXR 判讀題</h3><img class="cxr-image" src="assets/images/cxr-source.webp" alt="Chest X-ray"><p class="small muted">請選擇最符合此胸部 X 光的影像描述。</p><div class="option-grid">
       <button class="btn dark" data-a1cxr="0">Bilateral perihilar edema</button>
       <button class="btn dark" data-a1cxr="1">Hyperinflation with RLL infiltrates</button>
       <button class="btn dark" data-a1cxr="2">LLL partial lung collapse</button>
       <button class="btn dark" data-a1cxr="3">Right-sided pleural effusion</button>
     </div><div id="a1cxr-feedback" class="question-feedback">請選擇最符合的影像描述。</div></div>`;
+    right.innerHTML=evidenceCards()+'<div id="a1cxr-right-feedback" class="lung-right-feedback" aria-live="polite"></div>';
     document.querySelectorAll('[data-a1cxr]').forEach(b=>b.onclick=()=>{
-      const ok=b.dataset.a1cxr==='1';b.classList.add(ok?'correct':'wrong');
-      document.getElementById('a1cxr-feedback').textContent=ok?'✓ Hyperinflation with RLL infiltrates':'✕ 請重新觀察胸部 X 光。';
+      const ok=b.dataset.a1cxr==='1';
+      b.classList.add(ok?'correct':'wrong');
+      if(ok){
+        evidence.add('cxr');
+        document.getElementById('a1cxr-feedback').textContent='✓ Hyperinflation with RLL infiltrates';
+        right.innerHTML=evidenceCards()+'<div id="a1cxr-right-feedback" class="lung-right-feedback correct-feedback">✓ 正確 CXR 判讀已加入 Clinical Evidence Board</div>';
+      }else{
+        document.getElementById('a1cxr-feedback').textContent='✕ 請重新觀察胸部 X 光。';
+        const rf=document.getElementById('a1cxr-right-feedback');
+        if(rf) rf.innerHTML='<div class="wrong-feedback-item">✕ '+esc(b.textContent)+'</div>';
+      }
     });
   }
   bindStates();
