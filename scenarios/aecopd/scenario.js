@@ -11,7 +11,7 @@ const satisfactionQuestions=[
   '我對 AECOPD Gener8 教案整體感到滿意。'
 ];
 let lungAudio=null;
-let patientSoundEnabled=localStorage.getItem('gener8PatientSound')==='on';
+const patientSoundEnabled=false;
 const sensitivityLevels=['low','normal','high'];
 const sensitivitySettings={
   low:{label:'Low',cooldown:420},
@@ -44,17 +44,13 @@ function pauseLungAudio(){
 function createVideo(src,cls='patient-video'){const v=document.createElement('video');v.className=cls;v.src=src;v.autoplay=true;v.loop=true;v.muted=!patientSoundEnabled;v.playsInline=true;v.preload='auto';v.addEventListener('error',()=>{const e=document.createElement('div');e.className='media-error';e.textContent='Media unavailable: '+src.split('/').pop();v.replaceWith(e);});v.play().catch(()=>{});return v;}
 function updatePatientSoundUI(){
   const b=document.getElementById('patient-sound-btn');
-  if(b){b.dataset.on=patientSoundEnabled?'true':'false';b.textContent='Patient Sound: '+(patientSoundEnabled?'On':'Off');}
-  document.querySelectorAll('video.patient-video').forEach(v=>{v.muted=!patientSoundEnabled;if(patientSoundEnabled)v.play().catch(()=>{});});
+  if(b){b.style.display='none';b.setAttribute('aria-hidden','true');}
+  document.querySelectorAll('video.patient-video').forEach(v=>{v.muted=true;v.volume=0;});
   const o=document.getElementById('patient-sound-overlay');
-  if(o){o.classList.toggle('on',patientSoundEnabled);o.textContent=patientSoundEnabled?'🔊 病人聲音已開啟':'🔇 點此開啟病人聲音';}
+  if(o)o.remove();
 }
-function togglePatientSound(){
-  patientSoundEnabled=!patientSoundEnabled;
-  localStorage.setItem('gener8PatientSound',patientSoundEnabled?'on':'off');
-  updatePatientSoundUI();
-}
-function renderCenter(){center.innerHTML='';const b=document.createElement('div');b.className='patient-box';b.appendChild(createVideo(mediaForState[state]||M.act1InitialPatient));const o=document.createElement('button');o.id='patient-sound-overlay';o.className='patient-sound-overlay';o.onclick=togglePatientSound;b.appendChild(o);center.appendChild(b);updatePatientSoundUI();}
+function togglePatientSound(){updatePatientSoundUI();}
+function renderCenter(){center.innerHTML='';const b=document.createElement('div');b.className='patient-box';b.appendChild(createVideo(mediaForState[state]||M.act1InitialPatient));center.appendChild(b);updatePatientSoundUI();}
 function patientBackground(){return '<div class="eyebrow">Act 1｜Initial Assessment</div><h1>病人背景</h1><div class="card patient-background-card"><p>68 歲男性，170 cm / 60 kg，AECOPD<br>昨天住急診入院，今日頻咳、痰黃</p></div>';}
 function act1Controls(){const x=[['Vital Signs','ACT1_VITALS'],['ABG','ACT1_ABG'],['Oxygen Therapy','ACT1_OXYGEN'],['Lung Sound','ACT1_LUNG_SOUND'],['CXR','ACT1_CXR'],['Main Treatment','ACT1_TREATMENT']];return '<div class="controls">'+x.map(([l,s])=>'<button class="btn '+(state===s?'active':'')+'" data-state="'+s+'">'+l+'</button>').join('')+'</div>';}
 function evidenceCards(){const order=['vitals','abg','oxygen','lung','cxr'];return '<div class="eyebrow">Clinical Evidence Board</div><h2>Clinical Evidence Board</h2><p class="muted small">出現過的資料不消失；評估後持續累積。</p><div class="evidence-grid">'+order.filter(k=>evidence.has(k)).map(k=>{const x=D.act1.evidence[k];return '<div class="evidence-card"><h3>'+esc(x.title)+'</h3><p>'+x.lines.map(esc).join('\n')+'</p></div>';}).join('')+'</div>';}
@@ -242,6 +238,11 @@ function renderSurveyQuestions(){
   if(!root)return;
   root.innerHTML=satisfactionQuestions.map((q,i)=>'<div class="survey-question"><div class="qtext">'+(i+1)+'. '+esc(q)+'</div><div class="likert-row">'+[1,2,3,4,5].map(v=>'<label class="likert-option"><input type="radio" name="q'+(i+1)+'" value="'+v+'"><span>'+v+'</span></label>').join('')+'</div></div>').join('');
 }
+function ensureLoginVisible(){
+  const overlay=document.getElementById('login-overlay');
+  if(overlay)overlay.classList.remove('hidden');
+  document.body.classList.add('prelogin');
+}
 function initSessionForm(){
   const code=document.getElementById('session-code');
   const countSelect=document.getElementById('participant-count');
@@ -337,5 +338,5 @@ document.addEventListener('pointerleave',e=>{
 },true);
 function scale(){stage.style.transform='scale('+Math.min(innerWidth/5760,innerHeight/1080)+')';}function fullscreen(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
 document.querySelectorAll('#toolbar [data-jump]').forEach(b=>b.onclick=()=>setState(b.dataset.jump));document.getElementById('prev-step-btn').onclick=()=>moveStep(-1);document.getElementById('next-step-btn').onclick=()=>moveStep(1);document.getElementById('patient-sound-btn').onclick=togglePatientSound;document.getElementById('sensitivity-btn').onclick=cycleSensitivity;document.getElementById('fullscreen-btn').onclick=fullscreen;addEventListener('resize',scale);addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='1')setState('ACT1_START');if(k==='2')setState('ACT2_OVERVIEW');if(k==='f')fullscreen();if(k==='s')cycleSensitivity();if(e.key==='ArrowLeft')moveStep(-1);if(e.key==='ArrowRight')moveStep(1);});
-window.Gener8AECOPD={setState,getState:()=>state,setSensitivity:applySensitivity,getSensitivity:()=>sensitivity,togglePatientSound,openSatisfactionSurvey};initSessionForm();initSurvey();applySensitivity(sensitivity);updatePatientSoundUI();scale();setState(D.states.ACT1_START);
+window.Gener8AECOPD={setState,getState:()=>state,setSensitivity:applySensitivity,getSensitivity:()=>sensitivity,openSatisfactionSurvey};initSessionForm();initSurvey();applySensitivity(sensitivity);updatePatientSoundUI();scale();setState(D.states.ACT1_START);ensureLoginVisible();
 })();
