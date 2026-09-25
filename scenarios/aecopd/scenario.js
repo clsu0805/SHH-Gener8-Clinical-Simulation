@@ -11,7 +11,7 @@ const satisfactionQuestions=[
   '我對 AECOPD Gener8 教案整體感到滿意。'
 ];
 let lungAudio=null;
-const patientSoundEnabled=false;
+let patientSoundEnabled=false;
 const sensitivityLevels=['low','normal','high'];
 const sensitivitySettings={
   low:{label:'Low',cooldown:420},
@@ -52,17 +52,16 @@ function pauseLungAudio(){
 function createVideo(src,cls='patient-video'){
   const v=document.createElement('video');
   v.className=cls;
-  v.muted=true;
-  v.defaultMuted=true;
-  v.volume=0;
+  v.muted=!patientSoundEnabled;
+  v.defaultMuted=!patientSoundEnabled;
+  v.volume=patientSoundEnabled?1:0;
   v.playsInline=true;
   v.loop=true;
   v.preload='auto';
   v.src=src;
   v.autoplay=true;
-  v.setAttribute('muted','');
+  if(!patientSoundEnabled)v.setAttribute('muted',''); else v.removeAttribute('muted');
   v.setAttribute('playsinline','');
-  v.addEventListener('volumechange',()=>{if(!v.muted||v.volume!==0){v.muted=true;v.volume=0;}});
   v.addEventListener('error',()=>{
     const e=document.createElement('div');
     e.className='media-error';
@@ -74,12 +73,24 @@ function createVideo(src,cls='patient-video'){
 }
 function updatePatientSoundUI(){
   const b=document.getElementById('patient-sound-btn');
-  if(b){b.style.display='none';b.setAttribute('aria-hidden','true');}
-  document.querySelectorAll('video.patient-video').forEach(v=>{v.muted=true;v.volume=0;});
+  if(b){
+    b.style.display='';
+    b.removeAttribute('aria-hidden');
+    b.dataset.on=patientSoundEnabled?'true':'false';
+    b.textContent='Patient Sound: '+(patientSoundEnabled?'On':'Off');
+  }
+  document.querySelectorAll('video.patient-video').forEach(v=>{
+    v.muted=!patientSoundEnabled;
+    v.volume=patientSoundEnabled?1:0;
+    if(patientSoundEnabled)v.play().catch(()=>{});
+  });
   const o=document.getElementById('patient-sound-overlay');
   if(o)o.remove();
 }
-function togglePatientSound(){updatePatientSoundUI();}
+function togglePatientSound(){
+  patientSoundEnabled=!patientSoundEnabled;
+  updatePatientSoundUI();
+}
 function renderCenter(force=false){
   const scene=centerSceneForState(state);
   const currentVideo=center.querySelector('video.patient-video');
@@ -340,6 +351,8 @@ function startTeamScenario(){
   overlay.classList.add('hidden');
   overlay.style.display='none';
   document.body.classList.remove('prelogin');
+  patientSoundEnabled=true;
+  centerSceneKey=null;
   setState('ACT1_START');
 }
 function initSessionForm(){
