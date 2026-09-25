@@ -63,35 +63,35 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Noto San
 
     <section class="architecture" id="architecture">
       <div class="arch-flow">Gener8 Frontend → FastAPI → PostgreSQL → Gener8 Dashboard → Excel / Power BI</div>
-      <div class="api-status">API / Database 尚未連線</div>
+      <div class="api-status" id="api-status">API / Database 尚未連線</div>
     </section>
 
     <section class="filters">
-      <div class="field"><label>年度</label><select><option>2026</option><option>2027</option></select></div>
-      <div class="field"><label>月份</label><select><option>全部月份</option><option>09 月</option><option>10 月</option></select></div>
+      <div class="field"><label>年度</label><select id="filter-year"><option value="2026">2026</option><option value="2027">2027</option></select></div>
+      <div class="field"><label>月份</label><select id="filter-month"><option value="">全部月份</option><option value="9">09 月</option><option value="10">10 月</option></select></div>
       <div class="field"><label>開始日期</label><input type="date" value="2026-01-01"></div>
       <div class="field"><label>結束日期</label><input type="date" value="2026-12-31"></div>
       <div class="field"><label>教案</label><select><option>AECOPD v1.0</option></select></div>
-      <div class="filter-actions"><button class="action primary">套用篩選</button><button class="action secondary">清除</button></div>
+      <div class="filter-actions"><button class="action primary" id="apply-filter">套用篩選</button><button class="action secondary" id="clear-filter">清除</button></div>
     </section>
 
     <section class="kpis">
-      <div class="kpi"><div class="label">參加人次</div><div class="value">—</div><div class="hint">Participants</div></div>
-      <div class="kpi"><div class="label">參加職類人數</div><div class="value">—</div><div class="hint">Professions</div></div>
-      <div class="kpi"><div class="label">平均分數</div><div class="value">—</div><div class="hint">Average score</div></div>
-      <div class="kpi"><div class="label">平均過關時間</div><div class="value">—</div><div class="hint">Completion time</div></div>
-      <div class="kpi"><div class="label">平均通過率</div><div class="value">—</div><div class="hint">Question pass rate</div></div>
-      <div class="kpi"><div class="label">整體滿意度</div><div class="value">—</div><div class="hint">5-point Likert</div></div>
+      <div class="kpi"><div class="label">參加人次</div><div class="value" id="kpi-participants">—</div><div class="hint">Participants</div></div>
+      <div class="kpi"><div class="label">參加職類人數</div><div class="value" id="kpi-professions">—</div><div class="hint">Professions</div></div>
+      <div class="kpi"><div class="label">平均分數</div><div class="value" id="kpi-score">—</div><div class="hint">Average score</div></div>
+      <div class="kpi"><div class="label">平均過關時間</div><div class="value" id="kpi-duration">—</div><div class="hint">Completion time</div></div>
+      <div class="kpi"><div class="label">平均通過率</div><div class="value" id="kpi-pass">—</div><div class="hint">Question pass rate</div></div>
+      <div class="kpi"><div class="label">整體滿意度</div><div class="value" id="kpi-sat">—</div><div class="hint">5-point Likert</div></div>
     </section>
 
     <section class="grid2">
-      <div class="panel" id="questions"><h3>各題項通過率</h3><div class="panel-sub">Vital Signs / ABG / Oxygen / Lung Sound / CXR / Treatment / NIV</div><div class="empty"><div><strong>等待 PostgreSQL 統計資料</strong>FastAPI 連線後依年度、月份及日期區間自動產生圖表。</div></div></div>
+      <div class="panel" id="questions"><h3>各題項通過率</h3><div class="panel-sub">Lung Sound / CXR / ABG / Treatment 等作答事件</div><div id="question-stats" class="empty"><div><strong>等待 PostgreSQL 統計資料</strong>FastAPI 連線後依年度、月份自動更新。</div></div></div>
       <div class="panel"><h3>參加職類分布</h3><div class="panel-sub">西醫、護理、呼吸治療、藥學等 Team composition</div><div class="empty"><div><strong>尚無中央資料</strong>目前 AECOPD 前端資料仍以瀏覽器本機紀錄為主。</div></div></div>
     </section>
 
     <section class="panel" id="sessions" style="margin-bottom:16px">
       <h3>各場次明細</h3><div class="panel-sub">年／月／日／時間、Team 參加代號、人數、分數、完成時間、滿意度</div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>日期</th><th>時間</th><th>Team 參加代號</th><th>人數</th><th>職類</th><th>平均分數</th><th>過關時間</th><th>滿意度</th></tr></thead><tbody><tr><td colspan="8" style="text-align:center;color:#8999a5;padding:28px">FastAPI / PostgreSQL 連線後顯示所有場次</td></tr></tbody></table></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>日期</th><th>時間</th><th>Team 參加代號</th><th>人數</th><th>職類</th><th>平均分數</th><th>過關時間</th><th>滿意度</th></tr></thead><tbody id="session-tbody"><tr><td colspan="8" style="text-align:center;color:#8999a5;padding:28px">FastAPI / PostgreSQL 連線後顯示所有場次</td></tr></tbody></table></div>
     </section>
 
     <section class="grid2">
@@ -103,13 +103,102 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Noto San
       <h3>統計資料下載與一鍵匯出</h3>
       <div class="panel-sub">依目前篩選條件產生統計資料、Excel，並預留 Power BI 串接。</div>
       <div class="export-row">
-        <button class="export-btn" disabled>匯出 Excel</button>
+        <button class="export-btn" id="export-excel" disabled>匯出 Excel</button>
         <button class="export-btn" disabled>下載統計摘要</button>
         <button class="export-btn" disabled>Power BI Dataset</button>
       </div>
-      <div class="note">目前這一頁已完成 Dashboard 前端骨架，但尚未建立正式 FastAPI 與 PostgreSQL，因此 KPI、圖表、場次明細與 Excel 匯出先顯示為待連線狀態；不會用假資料冒充正式統計。</div>
+      <div class="note" id="backend-note">
+  FastAPI + PostgreSQL 程式層已建立。正式上線前仍需將 API 與 PostgreSQL 部署到可由 GitHub Pages 連線的 HTTPS 主機，並設定 API URL。
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+    <input id="api-base-input" placeholder="https://your-gener8-api.example.com" style="flex:1;min-width:260px;padding:9px 10px;border:1px solid #cfdde6;border-radius:8px">
+    <button id="save-api-base" class="action primary">儲存 API URL</button>
+  </div>
+</div>
     </section>
   </main>
 </div>
+
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const apiInput=$('api-base-input');
+const status=$('api-status');
+const exportBtn=$('export-excel');
+
+function apiBase(){return (localStorage.getItem('gener8ApiBase')||'').replace(/\/$/,'');}
+function query(){
+  const y=$('filter-year').value;
+  const m=$('filter-month').value;
+  const p=new URLSearchParams();
+  if(y)p.set('year',y);
+  if(m)p.set('month',m);
+  p.set('scenario','AECOPD');
+  return p.toString();
+}
+function fmtDuration(sec){
+  if(sec==null)return '—';
+  sec=Math.round(Number(sec));
+  const m=Math.floor(sec/60),s=sec%60;
+  return m+':'+String(s).padStart(2,'0');
+}
+async function getJson(path){
+  const b=apiBase();
+  if(!b)throw new Error('API URL not configured');
+  const r=await fetch(b+path);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.json();
+}
+function setDisconnected(msg){
+  status.textContent=msg||'API / Database 尚未連線';
+  status.style.background='rgba(255,209,102,.14)';
+  exportBtn.disabled=true;
+}
+async function load(){
+  const b=apiBase();
+  apiInput.value=b;
+  if(!b){setDisconnected();return;}
+  status.textContent='連線中…';
+  try{
+    const [health,summary,sessions,stats]=await Promise.all([
+      getJson('/health'),
+      getJson('/api/v1/dashboard/summary?'+query()),
+      getJson('/api/v1/dashboard/sessions?'+query()),
+      getJson('/api/v1/dashboard/question-stats?'+query())
+    ]);
+    status.textContent='API / PostgreSQL 已連線';
+    status.style.background='rgba(82,210,115,.18)';
+    $('kpi-participants').textContent=summary.participant_count;
+    $('kpi-professions').textContent=summary.profession_count;
+    $('kpi-score').textContent=summary.average_score==null?'—':summary.average_score;
+    $('kpi-duration').textContent=fmtDuration(summary.average_duration_seconds);
+    $('kpi-sat').textContent=summary.average_satisfaction==null?'—':summary.average_satisfaction.toFixed(2);
+    const pass=stats.length?stats.reduce((a,x)=>a+Number(x.pass_rate||0),0)/stats.length:null;
+    $('kpi-pass').textContent=pass==null?'—':pass.toFixed(1)+'%';
+
+    $('session-tbody').innerHTML=sessions.length?sessions.map(s=>{
+      const d=new Date(s.started_at);
+      return '<tr><td>'+d.toLocaleDateString('zh-TW')+'</td><td>'+d.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})+'</td><td>'+s.session_code+'</td><td>'+s.participant_count+'</td><td>—</td><td>'+(s.total_score??'—')+'</td><td>'+fmtDuration(s.duration_seconds)+'</td><td>'+(s.satisfaction_average??'—')+'</td></tr>';
+    }).join(''):'<tr><td colspan="8" style="text-align:center;padding:28px;color:#8999a5">此篩選區間尚無場次資料</td></tr>';
+
+    $('question-stats').className='';
+    $('question-stats').innerHTML=stats.length?'<div class="table-wrap"><table class="data-table"><thead><tr><th>題項</th><th>作答次數</th><th>答對次數</th><th>通過率</th></tr></thead><tbody>'+stats.map(x=>'<tr><td>'+x.question_id+'</td><td>'+x.attempts+'</td><td>'+x.correct_attempts+'</td><td>'+x.pass_rate+'%</td></tr>').join('')+'</tbody></table></div>':'<div class="empty"><div><strong>尚無作答事件</strong>完成測試後會顯示各題通過率。</div></div>';
+    exportBtn.disabled=false;
+  }catch(e){
+    setDisconnected('API 連線失敗');
+  }
+}
+$('apply-filter').onclick=load;
+$('clear-filter').onclick=()=>{$('filter-year').value='2026';$('filter-month').value='';load();};
+$('save-api-base').onclick=()=>{
+  localStorage.setItem('gener8ApiBase',apiInput.value.trim().replace(/\/$/,''));
+  load();
+};
+exportBtn.onclick=()=>{
+  const b=apiBase(); if(!b)return;
+  window.location.href=b+'/api/v1/export/excel?'+query();
+};
+load();
+})();
+</script>
 </body>
 </html>
