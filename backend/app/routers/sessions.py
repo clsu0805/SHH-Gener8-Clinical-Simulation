@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..db import get_db
 from ..models import LearningEvent, Participant, Satisfaction, Session
 from ..schemas import EventIn, SatisfactionIn, SessionCompleteIn, SessionCreate, SessionOut
+from ..scoring import calculate_session_score
 
 
 router = APIRouter(tags=["sessions"])
@@ -83,16 +84,28 @@ async def complete_session(
     if not session:
         raise HTTPException(status_code=404, detail="session not found")
 
+    events = (await db.scalars(
+        select(LearningEvent).where(LearningEvent.session_id == session_id)
+    )).all()
+    scoring = calculate_session_score(events)
+
     session.completed = True
     session.completed_at = datetime.utcnow()
-    session.total_score = payload.total_score
+    session.total_score = scoring["score"]
     if payload.duration_seconds is not None:
         session.duration_seconds = payload.duration_seconds
     elif session.started_at:
         session.duration_seconds = int((session.completed_at - session.started_at).total_seconds())
 
     await db.commit()
-    return {"status": "completed", "session_id": str(session_id)}
+    return {
+        "status": "completed",
+        "session_id": str(session_id),
+        "total_questions": scoring["total_questions"],
+        "correct_questions": scoring["correct_questions"],
+        "total_score": scoring["score"],
+        "question_results": scoring["question_results"],
+    }
 
 
 @router.post("/sessions/{session_id}/satisfaction", status_code=status.HTTP_201_CREATED)
