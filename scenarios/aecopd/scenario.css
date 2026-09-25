@@ -190,3 +190,15 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
   .survey-version-picker{grid-template-columns:1fr}
   .picker-title{grid-column:auto}
 }
+
+/* Compact Act 1 patient background and CXR options */
+.patient-background-card{padding:18px 24px;margin:10px 0 14px}
+.patient-background-card p{margin:0;font-size:29px;line-height:1.45}
+.cxr-question-panel{padding:14px 16px;margin-top:12px}
+.cxr-question-panel h3{margin:0 0 8px}
+.cxr-question-layout{display:grid;grid-template-columns:270px 1fr;gap:16px;align-items:start}
+.cxr-question-layout .cxr-image{width:270px;height:180px;margin:0;object-fit:contain}
+.cxr-question-body .small{margin:0 0 10px;font-size:21px}
+.cxr-option-grid{grid-template-columns:1fr 1fr;gap:10px!important}
+.cxr-option-grid .btn{min-height:64px!important;padding:10px 12px!important;font-size:22px!important;line-height:1.22}
+.cxr-question-panel .question-feedback{margin-top:8px;font-size:20px}
