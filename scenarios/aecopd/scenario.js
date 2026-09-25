@@ -3,13 +3,24 @@ const D=window.AECOPD_DATA,M=window.MEDIA_MANIFEST;
 const left=document.getElementById('left-wall'),center=document.getElementById('center-wall'),right=document.getElementById('right-wall'),stage=document.getElementById('stage');
 let state=D.states.ACT1_START,evidence=new Set(),act1Orders=new Set(),txSelected=new Set();
 let sessionMeta=null;
-const satisfactionQuestions=[
-  '本教案有助於我辨識 AECOPD 病人呼吸惡化的臨床警訊。',
-  '本教案有助於我整合 Vital Signs、Lung Sound、CXR 與 ABG 進行臨床判斷。',
-  '本教案的互動流程有助於我判斷處置的優先順序。',
-  '三面牆沉浸式情境與病人影音有助於提升我的學習投入。',
-  '整體而言，我對本次 AECOPD Gener8 教案的學習經驗感到滿意。'
-];
+const satisfactionQuestionSets={
+  A:[
+    '我能辨識 AECOPD 病人惡化警訊。',
+    '我能整合臨床資料進行判斷。',
+    '我能判斷治療處置的優先順序。',
+    '沉浸式情境有助於提升學習投入。',
+    '我對本次教案整體感到滿意。'
+  ],
+  B:[
+    '我能辨識 AECOPD 病人惡化警訊。',
+    '我能整合生命徵象、呼吸音、CXR 與 ABG 進行判斷。',
+    '我能判斷治療處置的優先順序。',
+    '三面牆情境與病人影音有助於學習。',
+    '我對 AECOPD Gener8 教案整體感到滿意。'
+  ]
+};
+let selectedSurveyVersion='A';
+let lungAudio=null;
 let patientSoundEnabled=localStorage.getItem('gener8PatientSound')==='on';
 const sensitivityLevels=['low','normal','high'];
 const sensitivitySettings={
@@ -46,14 +57,14 @@ function renderAct1(){
   if(['ACT1_TREATMENT','ACT1_TX_MEDICATION','ACT1_TX_OXYGEN','ACT1_TX_REASSESS','ACT1_TREATMENT_SUMMARY'].includes(state))renderAct1Treatment(); else right.innerHTML=evidenceCards();
 
   if(state==='ACT1_LUNG_SOUND'){
-    left.innerHTML+=`<div class="question-panel"><h3>呼吸音題</h3><p class="small muted">請聽病人的呼吸音，選擇最符合的呼吸音。</p><button id="play-act1-lung" class="btn dark">▶ 播放呼吸音</button><div class="option-grid" style="margin-top:12px">
+    left.innerHTML+=`<div class="question-panel"><h3>呼吸音題</h3><p class="small muted">請聽病人的呼吸音，選擇最符合的呼吸音。</p><div class="lung-audio-controls"><button id="play-act1-lung" class="btn dark">▶ 播放呼吸音</button><button id="pause-act1-lung" class="btn dark">⏸ 暫停</button></div><div class="option-grid" style="margin-top:12px">
       <button class="btn dark" data-a1lung="0">Unilateral decreased breath sounds</button>
       <button class="btn dark" data-a1lung="1">Bilateral expiratory wheezing</button>
       <button class="btn dark" data-a1lung="2">Bilateral basal crackles</button>
       <button class="btn dark" data-a1lung="3">Inspiratory stridor</button>
     </div><div id="a1lung-feedback" class="question-feedback">請先播放呼吸音再作答。</div></div>`;
     right.innerHTML=evidenceCards()+'<div id="a1lung-right-feedback" class="lung-right-feedback" aria-live="polite"></div>';
-    document.getElementById('play-act1-lung').onclick=()=>new Audio(M.lungSound).play().catch(()=>{document.getElementById('a1lung-feedback').textContent='音訊被瀏覽器阻擋，請再點一次播放。';});
+    document.getElementById('play-act1-lung').onclick=()=>playLungAudio('a1lung-feedback');document.getElementById('pause-act1-lung').onclick=pauseLungAudio;
     document.querySelectorAll('[data-a1lung]').forEach(b=>b.onclick=()=>{
       const ok=b.dataset.a1lung==='1';
       b.classList.add(ok?'correct':'wrong');
@@ -171,13 +182,13 @@ function act2Left(done=false){if(done)return '<div class="eyebrow">Treatment Res
 function monitor(src){return '<div class="eyebrow">Dynamic Vital Monitor</div><div id="monitor-slot"></div>';}
 function mountMonitor(src){const s=document.getElementById('monitor-slot');if(s)s.appendChild(createVideo(src,'monitor-video'));}
 function overview(){right.innerHTML=monitor(M.act2Monitor)+'<h2>重新評估</h2><div class="option-grid"><button class="btn dark" data-state="ACT2_LUNG_SOUND">Lung Sound</button><button class="btn dark" data-state="ACT2_ABG">ABG</button><button class="btn dark" data-state="ACT2_TREATMENT">Main Treatment</button></div>';mountMonitor(M.act2Monitor);bindStates();}
-function lung(){right.innerHTML=monitor(M.act2Monitor)+'<h2>Lung Sound</h2><button id="play-lung" class="btn dark">▶ Play respiratory sound</button><div class="option-grid" style="margin-top:14px">'+D.act2.lungOptions.map((x,i)=>'<button class="btn dark" data-lung="'+i+'">'+esc(x)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the best description.</div>';mountMonitor(M.act2Monitor);document.getElementById('play-lung').onclick=()=>new Audio(M.lungSound).play().catch(()=>document.getElementById('feedback').textContent='Audio playback blocked. Click Play again.');document.querySelectorAll('[data-lung]').forEach(b=>b.onclick=()=>{const ans=D.act2.lungOptions[+b.dataset.lung],ok=ans===D.act2.lungCorrect;b.classList.add(ok?'correct':'wrong');document.getElementById('feedback').textContent=ok?'✓ '+D.act2.lungCorrect:'✕ Reassess airflow limitation in worsening AECOPD.';});}
+function lung(){right.innerHTML=monitor(M.act2Monitor)+'<h2>Lung Sound</h2><div class="lung-audio-controls"><button id="play-lung" class="btn dark">▶ Play respiratory sound</button><button id="pause-lung" class="btn dark">⏸ Pause</button></div><div class="option-grid" style="margin-top:14px">'+D.act2.lungOptions.map((x,i)=>'<button class="btn dark" data-lung="'+i+'">'+esc(x)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the best description.</div>';mountMonitor(M.act2Monitor);document.getElementById('play-lung').onclick=()=>playLungAudio('feedback');document.getElementById('pause-lung').onclick=pauseLungAudio;document.querySelectorAll('[data-lung]').forEach(b=>b.onclick=()=>{const ans=D.act2.lungOptions[+b.dataset.lung],ok=ans===D.act2.lungCorrect;b.classList.add(ok?'correct':'wrong');document.getElementById('feedback').textContent=ok?'✓ '+D.act2.lungCorrect:'✕ Reassess airflow limitation in worsening AECOPD.';});}
 function abg(){right.innerHTML=monitor(M.act2Monitor)+'<h2>ABG</h2><div class="badge-row">'+D.act2.abg.map(x=>'<span class="badge">'+esc(x)+'</span>').join('')+'</div><div class="option-grid" style="margin-top:16px">'+D.act2.abgOptions.map((x,i)=>'<button class="btn dark" data-abg="'+i+'">'+esc(x)+'</button>').join('')+'</div><div id="feedback" class="feedback">Interpret the ABG.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-abg]').forEach(b=>b.onclick=()=>{const ans=D.act2.abgOptions[+b.dataset.abg],ok=ans===D.act2.abgCorrect;b.classList.add(ok?'correct':'wrong');document.getElementById('feedback').textContent=ok?'✓ '+D.act2.abgCorrect:'✕ Re-integrate pH, PaCO₂ and HCO₃⁻.';});}
 function treatment(){txSelected.clear();right.innerHTML=monitor(M.act2Monitor)+'<h2>Main Treatment</h2><p class="small muted">請選擇目前優先處置。</p><div class="option-grid">'+D.act2.treatmentOptions.map((x,i)=>'<button class="btn dark" data-tx="'+i+'">'+esc(x.label)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the four core immediate treatments.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>selectTx(b,+b.dataset.tx));}
 function selectTx(btn,i){const o=D.act2.treatmentOptions[i];if(o.correct===true){txSelected.add(i);btn.classList.add('correct');}else if(o.correct==='followup'){btn.classList.add('active');document.getElementById('feedback').textContent='Follow-up ABG is an important reassessment step after NIV.';return;}else btn.classList.add('wrong');if(txSelected.size===4){document.getElementById('feedback').textContent='✓ Core treatment selections confirmed. Preparing NIV.';setTimeout(()=>setState('ACT2_TREATMENT_CONFIRMED'),900);}}
 function confirmed(){const correct=D.act2.treatmentOptions.filter(o=>o.correct===true);right.innerHTML=monitor(M.act2Monitor)+'<h2>主要處置｜正確處置確認</h2><div class="order-wall">'+correct.map(o=>'<div class="order correct-order">✓ '+esc(o.label)+'</div>').join('')+'</div><div class="feedback">正確處置確認：準備啟動 NIV</div><button id="start-niv" class="btn dark next-major">▶ 啟動 NIV → 查看治療後狀態</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
 function niv(){right.innerHTML='<div class="eyebrow">NIV 後動態監測</div>'+monitor(M.nivMonitor)+'<h2>Confirmed orders</h2><div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div><div class="completion-banner">AECOPD Scenario v1.0｜NIV initiated｜病人安靜休息，呼吸逐步平穩</div><button id="open-survey" class="btn dark next-major">完成教案｜填寫 5 題學習滿意度 →</button>';mountMonitor(M.nivMonitor);document.getElementById('open-survey').onclick=openSatisfactionSurvey;}
-function setState(s){state=s;addEvidence(s);renderCenter();if(s.startsWith('ACT1_'))renderAct1();else{left.innerHTML=act2Left(s==='ACT2_NIV_RESPONSE');if(s==='ACT2_OVERVIEW')overview();if(s==='ACT2_LUNG_SOUND')lung();if(s==='ACT2_ABG')abg();if(s==='ACT2_TREATMENT')treatment();if(s==='ACT2_TREATMENT_CONFIRMED')confirmed();if(s==='ACT2_NIV_RESPONSE')niv();}updateStepUI();}
+function setState(s){pauseLungAudio();state=s;addEvidence(s);renderCenter();if(s.startsWith('ACT1_'))renderAct1();else{left.innerHTML=act2Left(s==='ACT2_NIV_RESPONSE');if(s==='ACT2_OVERVIEW')overview();if(s==='ACT2_LUNG_SOUND')lung();if(s==='ACT2_ABG')abg();if(s==='ACT2_TREATMENT')treatment();if(s==='ACT2_TREATMENT_CONFIRMED')confirmed();if(s==='ACT2_NIV_RESPONSE')niv();}updateStepUI();}
 
 const instructorSteps=['ACT1_START','ACT1_VITALS','ACT1_ABG','ACT1_OXYGEN','ACT1_LUNG_SOUND','ACT1_CXR','ACT1_TREATMENT','ACT1_TX_MEDICATION','ACT1_TX_OXYGEN','ACT1_TX_REASSESS','ACT1_TREATMENT_SUMMARY','ACT2_OVERVIEW','ACT2_LUNG_SOUND','ACT2_ABG','ACT2_TREATMENT','ACT2_TREATMENT_CONFIRMED','ACT2_NIV_RESPONSE'];
 function updateStepUI(){
@@ -195,7 +206,8 @@ function generateSessionCode(){
 function renderSurveyQuestions(){
   const root=document.getElementById('survey-questions');
   if(!root)return;
-  root.innerHTML=satisfactionQuestions.map((q,i)=>'<div class="survey-question"><div class="qtext">'+(i+1)+'. '+esc(q)+'</div><div class="likert-row">'+[1,2,3,4,5].map(v=>'<label class="likert-option"><input type="radio" name="q'+(i+1)+'" value="'+v+'"><span>'+v+'</span></label>').join('')+'</div></div>').join('');
+  const questions=satisfactionQuestionSets[selectedSurveyVersion];
+  root.innerHTML=questions.map((q,i)=>'<div class="survey-question"><div class="qtext">'+(i+1)+'. '+esc(q)+'</div><div class="likert-row">'+[1,2,3,4,5].map(v=>'<label class="likert-option"><input type="radio" name="q'+(i+1)+'" value="'+v+'"><span>'+v+'</span></label>').join('')+'</div></div>').join('');
 }
 function initSessionForm(){
   const code=document.getElementById('session-code');
@@ -209,7 +221,7 @@ function initSessionForm(){
     const err=document.getElementById('login-error');
     if(!professions.length){err.textContent='請至少選擇 1 個參與職類。';return;}
     if(!role){err.textContent='請選擇身份。';return;}
-    if(!Number.isFinite(count)||count<1){err.textContent='參與人數至少為 1 人。';return;}
+    if(!Number.isFinite(count)||count<1||count>5){err.textContent='參與人數請選擇 1–5 人。';return;}
     err.textContent='';
     sessionMeta={code:code.value,count,professions,role,startedAt:new Date().toISOString()};
     localStorage.setItem('gener8AECOPDSession',JSON.stringify(sessionMeta));
@@ -222,17 +234,23 @@ function openSatisfactionSurvey(){
   document.getElementById('survey-overlay').classList.remove('hidden');
 }
 function initSurvey(){
+  document.querySelectorAll('[data-survey-version]').forEach(b=>b.onclick=()=>{
+    selectedSurveyVersion=b.dataset.surveyVersion;
+    document.querySelectorAll('[data-survey-version]').forEach(x=>x.classList.toggle('active',x===b));
+    renderSurveyQuestions();
+    document.getElementById('survey-error').textContent='';
+  });
   document.getElementById('survey-form').onsubmit=e=>{
     e.preventDefault();
-    const answers=satisfactionQuestions.map((_,i)=>Number(document.querySelector('input[name="q'+(i+1)+'"]:checked')?.value||0));
+    const questions=satisfactionQuestionSets[selectedSurveyVersion];const answers=questions.map((_,i)=>Number(document.querySelector('input[name="q'+(i+1)+'"]:checked')?.value||0));
     const err=document.getElementById('survey-error');
     if(answers.some(v=>!v)){err.textContent='請完成 5 題後再送出。';return;}
     err.textContent='';
     const average=answers.reduce((a,b)=>a+b,0)/answers.length;
-    const payload={session:sessionMeta||JSON.parse(localStorage.getItem('gener8AECOPDSession')||'null'),answers,average:Number(average.toFixed(2)),submittedAt:new Date().toISOString()};
+    const payload={session:sessionMeta||JSON.parse(localStorage.getItem('gener8AECOPDSession')||'null'),surveyVersion:selectedSurveyVersion,questions,answers,average:Number(average.toFixed(2)),submittedAt:new Date().toISOString()};
     localStorage.setItem('gener8AECOPDLastSurvey',JSON.stringify(payload));
     document.getElementById('survey-overlay').classList.add('hidden');
-    document.getElementById('survey-summary').innerHTML='<strong>活動代號：</strong>'+esc(payload.session?.code||'—')+'<br><strong>5 題平均：</strong>'+payload.average+' / 5';
+    document.getElementById('survey-summary').innerHTML='<strong>參加代號：</strong>'+esc(payload.session?.code||'—')+'<br><strong>問卷版本：</strong>'+esc(payload.surveyVersion)+'<br><strong>5 題平均：</strong>'+payload.average+' / 5';
     document.getElementById('survey-thankyou').classList.remove('hidden');
   };
   document.getElementById('close-thankyou').onclick=()=>document.getElementById('survey-thankyou').classList.add('hidden');
