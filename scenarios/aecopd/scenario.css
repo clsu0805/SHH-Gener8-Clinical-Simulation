@@ -202,3 +202,35 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
 .cxr-option-grid{grid-template-columns:1fr 1fr;gap:10px!important}
 .cxr-option-grid .btn{min-height:64px!important;padding:10px 12px!important;font-size:22px!important;line-height:1.22}
 .cxr-question-panel .question-feedback{margin-top:8px;font-size:20px}
+
+/* Team Performance login */
+.team-session-card{max-width:1040px}
+.team-mode-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  margin:8px 0 12px;padding:7px 12px;border-radius:999px;
+  background:#e8f4fb;color:#0c5f8f;font-weight:900;letter-spacing:.08em;font-size:13px
+}
+.team-member-section{
+  margin:18px 0;padding:18px;border:1px solid #d8e5ed;border-radius:16px;background:#f8fbfd
+}
+.team-member-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}
+.team-member-heading h2{margin:0 0 4px;font-size:20px;color:#123b60}
+.team-member-heading p{margin:0;color:#6d8294;font-size:14px}
+#team-count-badge{
+  flex:0 0 auto;padding:7px 11px;border-radius:999px;background:#123b60;color:white;font-size:13px;font-weight:800
+}
+.team-member-row{
+  display:grid;grid-template-columns:100px 1fr 1fr;gap:14px;align-items:end;
+  padding:12px 0;border-top:1px solid #e1ebf1
+}
+.team-member-row:first-child{border-top:0}
+.member-number{font-weight:900;color:#0c5f8f;padding-bottom:12px}
+.team-performance-note{
+  display:flex;gap:8px;align-items:flex-start;padding:13px 15px;margin:14px 0 16px;
+  border-left:4px solid #0c5f8f;background:#eef7fc;border-radius:10px;color:#244b64;line-height:1.5
+}
+@media(max-width:760px){
+  .team-member-row{grid-template-columns:1fr}
+  .member-number{padding-bottom:0}
+  .team-member-heading{flex-direction:column}
+}
