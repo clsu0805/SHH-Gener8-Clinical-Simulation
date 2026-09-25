@@ -286,12 +286,11 @@ function initSessionForm(){
     }));
     if(members.some(m=>!m.profession||!m.role)){err.textContent='請完成每位團隊成員的職類與身份。';return;}
     err.textContent='';
-    const teamName=(document.getElementById('team-name').value||'').trim()||'Team';
     sessionMeta={
       mode:'team',
       performanceUnit:'team',
       code:code.value,
-      teamName,
+      teamName:code.value,
       count,
       members,
       professions:[...new Set(members.map(m=>m.profession))],
