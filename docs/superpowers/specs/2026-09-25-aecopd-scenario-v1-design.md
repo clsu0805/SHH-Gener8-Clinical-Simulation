@@ -358,3 +358,47 @@ The following are not required for this release:
 - CHF implementation
 
 These can be added later without changing the approved AECOPD clinical content.
+
+
+## Mandatory Video Fidelity Requirement
+
+The formal teaching version must use the original embedded MP4 media from the approved PowerPoint.
+
+This requirement is non-negotiable:
+
+- Center-wall patient states must render with HTML `<video>` elements backed by the extracted MP4 assets.
+- A still image, extracted video frame, PNG/JPG screenshot, emoji, or generic substitute does **not** satisfy the v1.0 requirement.
+- If a video fails to load, the application must show a visible media-load error for the instructor rather than silently falling back to a still image.
+- Videos must use relative asset paths and work from both the intended GitHub-hosted site and a local web server.
+- Looping/autoplay/mute behavior is configured per source-media role. Browser autoplay restrictions must not cause the patient video to disappear.
+- Audio-bearing source videos remain available as source assets; audio playback behavior is controlled intentionally to avoid duplicate sound with dedicated lung-sound playback.
+
+### Verified Source Media Inventory
+
+The approved PowerPoint contains these embedded media assets:
+
+- `media1.mp4` — 1280×720, H.264, ~10 s, used in slides 2–3
+- `media2.mp4` — 1280×720, H.264, ~10 s, used in slides 4–5
+- `media3.mp4` — 1280×720, H.264, ~10 s, used in slides 6–11
+- `media4.m4a` — AAC audio, ~16.6 s, embedded first-act respiratory audio
+- `media5.mp4` — 1280×720, H.264, ~8 s, used in slide 12
+- `media6.mp4` — 1280×720, H.264, ~6 s, used in slides 13–17
+- `media7.mp4` — 1280×720, H.264, ~8 s, used in slide 13
+- `media8.mp4` — 1280×720, H.264, ~6 s, used in slides 14–17
+- `media9.mp4` — 1280×720, H.264, ~7 s, used in slide 18
+- `media10.mp4` — 1280×720, H.264, ~6 s, used in slide 18
+
+During implementation, slide relationships and visual inspection determine whether each source MP4 is the patient-state video or monitor-state video. The mapping must be documented in the scenario manifest before v0.3 is accepted.
+
+### Video Acceptance Tests
+
+AECOPD Scenario v1.0 is not complete unless all of the following pass:
+
+1. At least one original MP4 is actively rendered on the center wall in Act 1.
+2. An original worsening-state MP4 is actively rendered on the center wall in Act 2.
+3. An original NIV/improvement MP4 is actively rendered in the final state.
+4. The DOM contains active `<video>` elements for patient video states, not still-image substitutes.
+5. Every referenced MP4 returns successfully from its relative path.
+6. Video playback can loop continuously during a teaching state.
+7. No source-media failure is hidden by a screenshot fallback.
+8. The first-act respiratory sound uses the extracted audio asset where required by the approved source deck.
