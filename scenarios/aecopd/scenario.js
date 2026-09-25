@@ -2,6 +2,14 @@
 const D=window.AECOPD_DATA,M=window.MEDIA_MANIFEST;
 const left=document.getElementById('left-wall'),center=document.getElementById('center-wall'),right=document.getElementById('right-wall'),stage=document.getElementById('stage');
 let state=D.states.ACT1_START,evidence=new Set(),act1Orders=new Set(),txSelected=new Set();
+let sessionMeta=null;
+const satisfactionQuestions=[
+  '本教案有助於我辨識 AECOPD 病人呼吸惡化的臨床警訊。',
+  '本教案有助於我整合 Vital Signs、Lung Sound、CXR 與 ABG 進行臨床判斷。',
+  '本教案的互動流程有助於我判斷處置的優先順序。',
+  '三面牆沉浸式情境與病人影音有助於提升我的學習投入。',
+  '整體而言，我對本次 AECOPD Gener8 教案的學習經驗感到滿意。'
+];
 let patientSoundEnabled=localStorage.getItem('gener8PatientSound')==='on';
 const sensitivityLevels=['low','normal','high'];
 const sensitivitySettings={
@@ -168,7 +176,7 @@ function abg(){right.innerHTML=monitor(M.act2Monitor)+'<h2>ABG</h2><div class="b
 function treatment(){txSelected.clear();right.innerHTML=monitor(M.act2Monitor)+'<h2>Main Treatment</h2><p class="small muted">請選擇目前優先處置。</p><div class="option-grid">'+D.act2.treatmentOptions.map((x,i)=>'<button class="btn dark" data-tx="'+i+'">'+esc(x.label)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the four core immediate treatments.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>selectTx(b,+b.dataset.tx));}
 function selectTx(btn,i){const o=D.act2.treatmentOptions[i];if(o.correct===true){txSelected.add(i);btn.classList.add('correct');}else if(o.correct==='followup'){btn.classList.add('active');document.getElementById('feedback').textContent='Follow-up ABG is an important reassessment step after NIV.';return;}else btn.classList.add('wrong');if(txSelected.size===4){document.getElementById('feedback').textContent='✓ Core treatment selections confirmed. Preparing NIV.';setTimeout(()=>setState('ACT2_TREATMENT_CONFIRMED'),900);}}
 function confirmed(){const correct=D.act2.treatmentOptions.filter(o=>o.correct===true);right.innerHTML=monitor(M.act2Monitor)+'<h2>主要處置｜正確處置確認</h2><div class="order-wall">'+correct.map(o=>'<div class="order correct-order">✓ '+esc(o.label)+'</div>').join('')+'</div><div class="feedback">正確處置確認：準備啟動 NIV</div><button id="start-niv" class="btn dark next-major">▶ 啟動 NIV → 查看治療後狀態</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
-function niv(){right.innerHTML='<div class="eyebrow">NIV 後動態監測</div>'+monitor(M.nivMonitor)+'<h2>Confirmed orders</h2><div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div><div class="completion-banner">AECOPD Scenario v1.0｜NIV initiated｜病人安靜休息，呼吸逐步平穩</div>';mountMonitor(M.nivMonitor);}
+function niv(){right.innerHTML='<div class="eyebrow">NIV 後動態監測</div>'+monitor(M.nivMonitor)+'<h2>Confirmed orders</h2><div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div><div class="completion-banner">AECOPD Scenario v1.0｜NIV initiated｜病人安靜休息，呼吸逐步平穩</div><button id="open-survey" class="btn dark next-major">完成教案｜填寫 5 題學習滿意度 →</button>';mountMonitor(M.nivMonitor);document.getElementById('open-survey').onclick=openSatisfactionSurvey;}
 function setState(s){state=s;addEvidence(s);renderCenter();if(s.startsWith('ACT1_'))renderAct1();else{left.innerHTML=act2Left(s==='ACT2_NIV_RESPONSE');if(s==='ACT2_OVERVIEW')overview();if(s==='ACT2_LUNG_SOUND')lung();if(s==='ACT2_ABG')abg();if(s==='ACT2_TREATMENT')treatment();if(s==='ACT2_TREATMENT_CONFIRMED')confirmed();if(s==='ACT2_NIV_RESPONSE')niv();}updateStepUI();}
 
 const instructorSteps=['ACT1_START','ACT1_VITALS','ACT1_ABG','ACT1_OXYGEN','ACT1_LUNG_SOUND','ACT1_CXR','ACT1_TREATMENT','ACT1_TX_MEDICATION','ACT1_TX_OXYGEN','ACT1_TX_REASSESS','ACT1_TREATMENT_SUMMARY','ACT2_OVERVIEW','ACT2_LUNG_SOUND','ACT2_ABG','ACT2_TREATMENT','ACT2_TREATMENT_CONFIRMED','ACT2_NIV_RESPONSE'];
@@ -179,6 +187,56 @@ function updateStepUI(){
   if(p)p.disabled=i<=0;if(n)n.disabled=i<0||i>=instructorSteps.length-1;
 }
 function moveStep(delta){const i=instructorSteps.indexOf(state);if(i<0)return;const ni=Math.max(0,Math.min(instructorSteps.length-1,i+delta));setState(instructorSteps[ni]);}
+function generateSessionCode(){
+  const d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  const n=Math.floor(100+Math.random()*900);
+  return 'G8-AECOPD-'+mm+dd+'-'+n;
+}
+function renderSurveyQuestions(){
+  const root=document.getElementById('survey-questions');
+  if(!root)return;
+  root.innerHTML=satisfactionQuestions.map((q,i)=>'<div class="survey-question"><div class="qtext">'+(i+1)+'. '+esc(q)+'</div><div class="likert-row">'+[1,2,3,4,5].map(v=>'<label class="likert-option"><input type="radio" name="q'+(i+1)+'" value="'+v+'"><span>'+v+'</span></label>').join('')+'</div></div>').join('');
+}
+function initSessionForm(){
+  const code=document.getElementById('session-code');
+  if(code&&!code.value)code.value=generateSessionCode();
+  document.getElementById('regen-code').onclick=()=>{code.value=generateSessionCode();};
+  document.getElementById('session-form').onsubmit=e=>{
+    e.preventDefault();
+    const professions=[...document.querySelectorAll('input[name="profession"]:checked')].map(x=>x.value);
+    const role=document.getElementById('participant-role').value;
+    const count=Number(document.getElementById('participant-count').value);
+    const err=document.getElementById('login-error');
+    if(!professions.length){err.textContent='請至少選擇 1 個參與職類。';return;}
+    if(!role){err.textContent='請選擇身份。';return;}
+    if(!Number.isFinite(count)||count<1){err.textContent='參與人數至少為 1 人。';return;}
+    err.textContent='';
+    sessionMeta={code:code.value,count,professions,role,startedAt:new Date().toISOString()};
+    localStorage.setItem('gener8AECOPDSession',JSON.stringify(sessionMeta));
+    document.getElementById('login-overlay').classList.add('hidden');
+    document.body.classList.remove('prelogin');
+  };
+}
+function openSatisfactionSurvey(){
+  renderSurveyQuestions();
+  document.getElementById('survey-overlay').classList.remove('hidden');
+}
+function initSurvey(){
+  document.getElementById('survey-form').onsubmit=e=>{
+    e.preventDefault();
+    const answers=satisfactionQuestions.map((_,i)=>Number(document.querySelector('input[name="q'+(i+1)+'"]:checked')?.value||0));
+    const err=document.getElementById('survey-error');
+    if(answers.some(v=>!v)){err.textContent='請完成 5 題後再送出。';return;}
+    err.textContent='';
+    const average=answers.reduce((a,b)=>a+b,0)/answers.length;
+    const payload={session:sessionMeta||JSON.parse(localStorage.getItem('gener8AECOPDSession')||'null'),answers,average:Number(average.toFixed(2)),submittedAt:new Date().toISOString()};
+    localStorage.setItem('gener8AECOPDLastSurvey',JSON.stringify(payload));
+    document.getElementById('survey-overlay').classList.add('hidden');
+    document.getElementById('survey-summary').innerHTML='<strong>活動代號：</strong>'+esc(payload.session?.code||'—')+'<br><strong>5 題平均：</strong>'+payload.average+' / 5';
+    document.getElementById('survey-thankyou').classList.remove('hidden');
+  };
+  document.getElementById('close-thankyou').onclick=()=>document.getElementById('survey-thankyou').classList.add('hidden');
+}
 function applySensitivity(level){
   sensitivity=level;
   document.body.dataset.sensitivity=level;
@@ -216,5 +274,5 @@ document.addEventListener('pointerleave',e=>{
 },true);
 function scale(){stage.style.transform='scale('+Math.min(innerWidth/5760,innerHeight/1080)+')';}function fullscreen(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
 document.querySelectorAll('#toolbar [data-jump]').forEach(b=>b.onclick=()=>setState(b.dataset.jump));document.getElementById('prev-step-btn').onclick=()=>moveStep(-1);document.getElementById('next-step-btn').onclick=()=>moveStep(1);document.getElementById('patient-sound-btn').onclick=togglePatientSound;document.getElementById('sensitivity-btn').onclick=cycleSensitivity;document.getElementById('fullscreen-btn').onclick=fullscreen;addEventListener('resize',scale);addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='1')setState('ACT1_START');if(k==='2')setState('ACT2_OVERVIEW');if(k==='f')fullscreen();if(k==='s')cycleSensitivity();if(e.key==='ArrowLeft')moveStep(-1);if(e.key==='ArrowRight')moveStep(1);});
-window.Gener8AECOPD={setState,getState:()=>state,setSensitivity:applySensitivity,getSensitivity:()=>sensitivity,togglePatientSound};applySensitivity(sensitivity);updatePatientSoundUI();scale();setState(D.states.ACT1_START);
+window.Gener8AECOPD={setState,getState:()=>state,setSensitivity:applySensitivity,getSensitivity:()=>sensitivity,togglePatientSound,openSatisfactionSurvey};initSessionForm();initSurvey();applySensitivity(sensitivity);updatePatientSoundUI();scale();setState(D.states.ACT1_START);
 })();
