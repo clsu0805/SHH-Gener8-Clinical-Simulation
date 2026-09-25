@@ -33,6 +33,24 @@ if(!sensitivitySettings[sensitivity]) sensitivity='normal';
 let lastInteractionAt=0;
 const mediaForState={ACT1_START:M.act1InitialPatient,ACT1_VITALS:M.act1VitalsPatient,ACT1_ABG:M.act1EvidencePatient,ACT1_OXYGEN:M.act1EvidencePatient,ACT1_LUNG_SOUND:M.act1EvidencePatient,ACT1_CXR:M.act1EvidencePatient,ACT1_TREATMENT:M.act1EvidencePatient,ACT1_TX_MEDICATION:M.act1EvidencePatient,ACT1_TX_OXYGEN:M.act1EvidencePatient,ACT1_TX_REASSESS:M.act1EvidencePatient,ACT1_TREATMENT_SUMMARY:M.act1PostTreatmentPatient,ACT2_OVERVIEW:M.act2IntroPatient,ACT2_LUNG_SOUND:M.act2Patient,ACT2_ABG:M.act2Patient,ACT2_TREATMENT:M.act2Patient,ACT2_TREATMENT_CONFIRMED:M.act2Patient,ACT2_NIV_RESPONSE:M.nivPatient};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function getLungAudio(){
+  if(!lungAudio){
+    lungAudio=new Audio(M.lungSound);
+    lungAudio.preload='auto';
+  }
+  return lungAudio;
+}
+function playLungAudio(feedbackId){
+  const a=getLungAudio();
+  if(a.ended)a.currentTime=0;
+  a.play().catch(()=>{
+    const f=document.getElementById(feedbackId);
+    if(f)f.textContent='音訊被瀏覽器阻擋，請再點一次播放。';
+  });
+}
+function pauseLungAudio(){
+  if(lungAudio&&!lungAudio.paused)lungAudio.pause();
+}
 function createVideo(src,cls='patient-video'){const v=document.createElement('video');v.className=cls;v.src=src;v.autoplay=true;v.loop=true;v.muted=!patientSoundEnabled;v.playsInline=true;v.preload='auto';v.addEventListener('error',()=>{const e=document.createElement('div');e.className='media-error';e.textContent='Media unavailable: '+src.split('/').pop();v.replaceWith(e);});v.play().catch(()=>{});return v;}
 function updatePatientSoundUI(){
   const b=document.getElementById('patient-sound-btn');
