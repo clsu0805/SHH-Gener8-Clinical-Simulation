@@ -23,10 +23,11 @@ if(!sensitivitySettings[sensitivity]) sensitivity='normal';
 let lastInteractionAt=0;
 let centerSceneKey=null;
 function centerSceneForState(s){
-  if(s==='ACT1_TREATMENT_SUMMARY') return {key:'act1-post-treatment',src:M.act1PostTreatmentPatient};
-  if(s.startsWith('ACT1_')) return {key:'act1-assessment',src:M.act1InitialPatient};
-  if(s==='ACT2_NIV_RESPONSE') return {key:'act2-niv',src:M.nivPatient};
-  if(s.startsWith('ACT2_')) return {key:'act2-deterioration',src:M.act2IntroPatient};
+  const key=String(s||'');
+  if(key==='ACT1_TREATMENT_SUMMARY') return {key:'act1-post-treatment',src:M.act1PostTreatmentPatient};
+  if(key.startsWith('ACT1_')) return {key:'act1-assessment',src:M.act1InitialPatient};
+  if(key==='ACT2_NIV_RESPONSE') return {key:'act2-niv',src:M.nivPatient};
+  if(key.startsWith('ACT2_')) return {key:'act2-deterioration',src:M.act2IntroPatient};
   return {key:'act1-assessment',src:M.act1InitialPatient};
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -246,7 +247,25 @@ function treatment(){txSelected.clear();right.innerHTML=monitor(M.act2Monitor)+'
 function selectTx(btn,i){const o=D.act2.treatmentOptions[i];if(o.correct===true){txSelected.add(i);btn.classList.add('correct');}else if(o.correct==='followup'){btn.classList.add('active');document.getElementById('feedback').textContent='Follow-up ABG is an important reassessment step after NIV.';return;}else btn.classList.add('wrong');if(txSelected.size===4){document.getElementById('feedback').textContent='✓ Core treatment selections confirmed. Preparing NIV.';setTimeout(()=>setState('ACT2_TREATMENT_CONFIRMED'),900);}}
 function confirmed(){const correct=D.act2.treatmentOptions.filter(o=>o.correct===true);right.innerHTML=monitor(M.act2Monitor)+'<h2>主要處置｜正確處置確認</h2><div class="order-wall">'+correct.map(o=>'<div class="order correct-order">✓ '+esc(o.label)+'</div>').join('')+'</div><div class="feedback">正確處置確認：準備啟動 NIV</div><button id="start-niv" class="btn dark next-major">▶ 啟動 NIV → 查看治療後狀態</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
 function niv(){right.innerHTML='<div class="eyebrow">NIV 後動態監測</div>'+monitor(M.nivMonitor)+'<h2>Confirmed orders</h2><div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div><div class="completion-banner">AECOPD Scenario v1.0｜NIV initiated｜病人安靜休息，呼吸逐步平穩</div><button id="open-survey" class="btn dark next-major">完成教案｜填寫 5 題學習滿意度 →</button>';mountMonitor(M.nivMonitor);document.getElementById('open-survey').onclick=openSatisfactionSurvey;}
-function setState(s){pauseLungAudio();state=s;addEvidence(s);renderCenter();if(s.startsWith('ACT1_'))renderAct1();else{left.innerHTML=act2Left(s==='ACT2_NIV_RESPONSE');if(s==='ACT2_OVERVIEW')overview();if(s==='ACT2_LUNG_SOUND')lung();if(s==='ACT2_ABG')abg();if(s==='ACT2_TREATMENT')treatment();if(s==='ACT2_TREATMENT_CONFIRMED')confirmed();if(s==='ACT2_NIV_RESPONSE')niv();}updateStepUI();}
+function setState(s){
+  pauseLungAudio();
+  state=s;
+  addEvidence(s);
+  const key=String(s||'');
+  if(key.startsWith('ACT1_')){
+    renderAct1();
+  }else{
+    left.innerHTML=act2Left(key==='ACT2_NIV_RESPONSE');
+    if(key==='ACT2_OVERVIEW')overview();
+    if(key==='ACT2_LUNG_SOUND')lung();
+    if(key==='ACT2_ABG')abg();
+    if(key==='ACT2_TREATMENT')treatment();
+    if(key==='ACT2_TREATMENT_CONFIRMED')confirmed();
+    if(key==='ACT2_NIV_RESPONSE')niv();
+  }
+  renderCenter();
+  updateStepUI();
+}
 
 const instructorSteps=['ACT1_START','ACT1_VITALS','ACT1_ABG','ACT1_OXYGEN','ACT1_LUNG_SOUND','ACT1_CXR','ACT1_TREATMENT','ACT1_TX_MEDICATION','ACT1_TX_OXYGEN','ACT1_TX_REASSESS','ACT1_TREATMENT_SUMMARY','ACT2_OVERVIEW','ACT2_LUNG_SOUND','ACT2_ABG','ACT2_TREATMENT','ACT2_TREATMENT_CONFIRMED','ACT2_NIV_RESPONSE'];
 function updateStepUI(){
