@@ -2,6 +2,15 @@
 const D=window.AECOPD_DATA,M=window.MEDIA_MANIFEST;
 const left=document.getElementById('left-wall'),center=document.getElementById('center-wall'),right=document.getElementById('right-wall'),stage=document.getElementById('stage');
 let state=D.states.ACT1_START,evidence=new Set(),act1Orders=new Set(),txSelected=new Set();
+const sensitivityLevels=['low','normal','high'];
+const sensitivitySettings={
+  low:{label:'Low',cooldown:420},
+  normal:{label:'Normal',cooldown:240},
+  high:{label:'High',cooldown:100}
+};
+let sensitivity=localStorage.getItem('gener8InteractionSensitivity')||'normal';
+if(!sensitivitySettings[sensitivity]) sensitivity='normal';
+let lastInteractionAt=0;
 const mediaForState={ACT1_START:M.act1InitialPatient,ACT1_VITALS:M.act1VitalsPatient,ACT1_ABG:M.act1EvidencePatient,ACT1_OXYGEN:M.act1EvidencePatient,ACT1_LUNG_SOUND:M.act1EvidencePatient,ACT1_CXR:M.act1EvidencePatient,ACT1_TREATMENT:M.act1EvidencePatient,ACT2_OVERVIEW:M.act2IntroPatient,ACT2_LUNG_SOUND:M.act2Patient,ACT2_ABG:M.act2Patient,ACT2_TREATMENT:M.act2Patient,ACT2_TREATMENT_CONFIRMED:M.act2Patient,ACT2_NIV_RESPONSE:M.nivPatient};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function createVideo(src,cls='patient-video'){const v=document.createElement('video');v.className=cls;v.src=src;v.autoplay=true;v.loop=true;v.muted=true;v.playsInline=true;v.preload='auto';v.addEventListener('error',()=>{const e=document.createElement('div');e.className='media-error';e.textContent='Media unavailable: '+src.split('/').pop();v.replaceWith(e);});v.play().catch(()=>{});return v;}
@@ -28,7 +37,42 @@ function selectTx(btn,i){const o=D.act2.treatmentOptions[i];if(o.correct===true)
 function confirmed(){right.innerHTML=monitor(M.act2Monitor)+'<h2>Main Treatment</h2><div class="order-wall">'+D.act2.treatmentOptions.map(o=>'<div class="order">'+(o.correct===true?'✓ ':o.correct===false?'✕ ':'↻ ')+esc(o.label)+'</div>').join('')+'</div><button id="start-niv" class="btn dark" style="margin-top:15px">Initiate NIV</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
 function niv(){right.innerHTML=monitor(M.nivMonitor)+'<h2>Confirmed Orders</h2><div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div>';mountMonitor(M.nivMonitor);}
 function setState(s){state=s;addEvidence(s);renderCenter();if(s.startsWith('ACT1_'))renderAct1();else{left.innerHTML=act2Left(s==='ACT2_NIV_RESPONSE');if(s==='ACT2_OVERVIEW')overview();if(s==='ACT2_LUNG_SOUND')lung();if(s==='ACT2_ABG')abg();if(s==='ACT2_TREATMENT')treatment();if(s==='ACT2_TREATMENT_CONFIRMED')confirmed();if(s==='ACT2_NIV_RESPONSE')niv();}}
+function applySensitivity(level){
+  sensitivity=level;
+  document.body.dataset.sensitivity=level;
+  localStorage.setItem('gener8InteractionSensitivity',level);
+  const b=document.getElementById('sensitivity-btn');
+  if(b){
+    b.dataset.level=level;
+    b.textContent='Sensitivity: '+sensitivitySettings[level].label;
+    b.title='Gener8 interaction sensitivity — '+sensitivitySettings[level].label;
+  }
+}
+function cycleSensitivity(){
+  const i=sensitivityLevels.indexOf(sensitivity);
+  applySensitivity(sensitivityLevels[(i+1)%sensitivityLevels.length]);
+}
+document.addEventListener('click',e=>{
+  const interactive=e.target.closest('.btn,#toolbar button');
+  if(!interactive||interactive.id==='sensitivity-btn') return;
+  const now=performance.now();
+  const wait=sensitivitySettings[sensitivity].cooldown;
+  if(now-lastInteractionAt<wait){
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    return;
+  }
+  lastInteractionAt=now;
+},true);
+document.addEventListener('pointerenter',e=>{
+  const b=e.target.closest('.btn');
+  if(b) b.classList.add('sensor-focus');
+},true);
+document.addEventListener('pointerleave',e=>{
+  const b=e.target.closest('.btn');
+  if(b) b.classList.remove('sensor-focus');
+},true);
 function scale(){stage.style.transform='scale('+Math.min(innerWidth/5760,innerHeight/1080)+')';}function fullscreen(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
-document.querySelectorAll('#toolbar [data-jump]').forEach(b=>b.onclick=()=>setState(b.dataset.jump));document.getElementById('fullscreen-btn').onclick=fullscreen;addEventListener('resize',scale);addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='1')setState('ACT1_START');if(k==='2')setState('ACT2_OVERVIEW');if(k==='f')fullscreen();});
-window.Gener8AECOPD={setState,getState:()=>state};scale();setState(D.states.ACT1_START);
+document.querySelectorAll('#toolbar [data-jump]').forEach(b=>b.onclick=()=>setState(b.dataset.jump));document.getElementById('sensitivity-btn').onclick=cycleSensitivity;document.getElementById('fullscreen-btn').onclick=fullscreen;addEventListener('resize',scale);addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='1')setState('ACT1_START');if(k==='2')setState('ACT2_OVERVIEW');if(k==='f')fullscreen();if(k==='s')cycleSensitivity();});
+window.Gener8AECOPD={setState,getState:()=>state,setSensitivity:applySensitivity,getSensitivity:()=>sensitivity};applySensitivity(sensitivity);scale();setState(D.states.ACT1_START);
 })();
