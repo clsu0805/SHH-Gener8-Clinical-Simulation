@@ -24,36 +24,28 @@ let lastInteractionAt=0;
 let centerSceneKey=null;
 function centerSceneForState(s){
   const key=String(s||'');
-  // Follow the embedded-media sequence in the approved PowerPoint.
-  // Slides 2-3: media1
-  if(key==='ACT1_START'||key==='ACT1_VITALS'){
-    return {key:'ppt-media1',src:M.act1InitialPatient};
+  // Act 1 starts with the speaking patient clip. After initial entry,
+  // use the user-provided repeated-breathing loop continuously across assessment choices.
+  if(key==='ACT1_START'){
+    return {key:'act1-speaking',src:M.act1InitialPatient};
   }
-  // Slides 4-5: media2
-  if(key==='ACT1_ABG'||key==='ACT1_OXYGEN'){
-    return {key:'ppt-media2',src:M.act1VitalsPatient};
+  if(['ACT1_VITALS','ACT1_ABG','ACT1_OXYGEN','ACT1_LUNG_SOUND','ACT1_CXR','ACT1_TREATMENT','ACT1_TX_MEDICATION','ACT1_TX_OXYGEN','ACT1_TX_REASSESS'].includes(key)){
+    return {key:'act1-breathing-loop',src:M.act1BreathingLoop};
   }
-  // Slides 6-11: media3
-  if(['ACT1_LUNG_SOUND','ACT1_CXR','ACT1_TREATMENT','ACT1_TX_MEDICATION','ACT1_TX_OXYGEN','ACT1_TX_REASSESS'].includes(key)){
-    return {key:'ppt-media3',src:M.act1EvidencePatient};
-  }
-  // Slide 12: media5
+  // User-provided oxygen-treatment scene before transition to Act 2.
   if(key==='ACT1_TREATMENT_SUMMARY'){
-    return {key:'ppt-media5',src:M.act1PostTreatmentPatient};
+    return {key:'act1-oxygen-scene',src:M.act1OxygenScene};
   }
-  // Slide 13: media7
   if(key==='ACT2_OVERVIEW'){
-    return {key:'ppt-media7',src:M.act2IntroPatient};
+    return {key:'act2-intro',src:M.act2IntroPatient};
   }
-  // Slides 14-17: media8
   if(['ACT2_LUNG_SOUND','ACT2_ABG','ACT2_TREATMENT','ACT2_TREATMENT_CONFIRMED'].includes(key)){
-    return {key:'ppt-media8',src:M.act2Patient};
+    return {key:'act2-deterioration',src:M.act2Patient};
   }
-  // Slide 18: media9
   if(key==='ACT2_NIV_RESPONSE'){
-    return {key:'ppt-media9',src:M.nivPatient};
+    return {key:'act2-niv',src:M.nivPatient};
   }
-  return {key:'ppt-media1',src:M.act1InitialPatient};
+  return {key:'act1-speaking',src:M.act1InitialPatient};
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function getLungAudio(){
