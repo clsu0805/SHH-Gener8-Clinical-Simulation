@@ -265,6 +265,42 @@ function ensureLoginVisible(){
   if(overlay)overlay.classList.remove('hidden');
   document.body.classList.add('prelogin');
 }
+function startTeamScenario(){
+  const code=document.getElementById('session-code');
+  const countSelect=document.getElementById('participant-count');
+  const count=Number(countSelect?.value||0);
+  const err=document.getElementById('login-error');
+  if(!Number.isFinite(count)||count<1||count>5){err.textContent='參與人數請選擇 1–5 人。';return;}
+  const professionEls=[...document.querySelectorAll('.member-profession')];
+  const roleEls=[...document.querySelectorAll('.member-role')];
+  const members=professionEls.map((p,i)=>({
+    memberNo:i+1,
+    profession:p.value,
+    role:roleEls[i]?.value||''
+  }));
+  if(members.length!==count||members.some(m=>!m.profession||!m.role)){
+    err.textContent='請完成每位團隊成員的職類與身份。';
+    return;
+  }
+  err.textContent='';
+  sessionMeta={
+    mode:'team',
+    performanceUnit:'team',
+    code:code.value,
+    teamName:code.value,
+    count,
+    members,
+    professions:[...new Set(members.map(m=>m.profession))],
+    roles:[...new Set(members.map(m=>m.role))],
+    startedAt:new Date().toISOString()
+  };
+  localStorage.setItem('gener8AECOPDSession',JSON.stringify(sessionMeta));
+  const overlay=document.getElementById('login-overlay');
+  overlay.classList.add('hidden');
+  overlay.style.display='none';
+  document.body.classList.remove('prelogin');
+  setState('ACT1_START');
+}
 function initSessionForm(){
   const code=document.getElementById('session-code');
   const countSelect=document.getElementById('participant-count');
@@ -272,36 +308,9 @@ function initSessionForm(){
   document.getElementById('regen-code').onclick=()=>{code.value=generateSessionCode();};
   countSelect.onchange=renderTeamMembers;
   renderTeamMembers();
-  document.getElementById('session-form').onsubmit=e=>{
-    e.preventDefault();
-    const count=Number(countSelect.value);
-    const err=document.getElementById('login-error');
-    if(!Number.isFinite(count)||count<1||count>5){err.textContent='參與人數請選擇 1–5 人。';return;}
-    const professionEls=[...document.querySelectorAll('.member-profession')];
-    const roleEls=[...document.querySelectorAll('.member-role')];
-    const members=professionEls.map((p,i)=>({
-      memberNo:i+1,
-      profession:p.value,
-      role:roleEls[i]?.value||''
-    }));
-    if(members.some(m=>!m.profession||!m.role)){err.textContent='請完成每位團隊成員的職類與身份。';return;}
-    err.textContent='';
-    sessionMeta={
-      mode:'team',
-      performanceUnit:'team',
-      code:code.value,
-      teamName:code.value,
-      count,
-      members,
-      professions:[...new Set(members.map(m=>m.profession))],
-      roles:[...new Set(members.map(m=>m.role))],
-      startedAt:new Date().toISOString()
-    };
-    localStorage.setItem('gener8AECOPDSession',JSON.stringify(sessionMeta));
-    document.getElementById('login-overlay').classList.add('hidden');
-    document.body.classList.remove('prelogin');
-    setState(D.states.ACT1_START);
-  };
+  const form=document.getElementById('session-form');
+  form.onsubmit=e=>{e.preventDefault();startTeamScenario();};
+  document.getElementById('start-team-btn').onclick=startTeamScenario;
 }
 function openSatisfactionSurvey(){
   renderSurveyQuestions();
