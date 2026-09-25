@@ -21,7 +21,14 @@ const sensitivitySettings={
 let sensitivity=localStorage.getItem('gener8InteractionSensitivity')||'normal';
 if(!sensitivitySettings[sensitivity]) sensitivity='normal';
 let lastInteractionAt=0;
-const mediaForState={ACT1_START:M.act1InitialPatient,ACT1_VITALS:M.act1VitalsPatient,ACT1_ABG:M.act1EvidencePatient,ACT1_OXYGEN:M.act1EvidencePatient,ACT1_LUNG_SOUND:M.act1EvidencePatient,ACT1_CXR:M.act1EvidencePatient,ACT1_TREATMENT:M.act1EvidencePatient,ACT1_TX_MEDICATION:M.act1EvidencePatient,ACT1_TX_OXYGEN:M.act1EvidencePatient,ACT1_TX_REASSESS:M.act1EvidencePatient,ACT1_TREATMENT_SUMMARY:M.act1PostTreatmentPatient,ACT2_OVERVIEW:M.act2IntroPatient,ACT2_LUNG_SOUND:M.act2Patient,ACT2_ABG:M.act2Patient,ACT2_TREATMENT:M.act2Patient,ACT2_TREATMENT_CONFIRMED:M.act2Patient,ACT2_NIV_RESPONSE:M.nivPatient};
+let centerSceneKey=null;
+function centerSceneForState(s){
+  if(s==='ACT1_TREATMENT_SUMMARY') return {key:'act1-post-treatment',src:M.act1PostTreatmentPatient};
+  if(s.startsWith('ACT1_')) return {key:'act1-assessment',src:M.act1InitialPatient};
+  if(s==='ACT2_NIV_RESPONSE') return {key:'act2-niv',src:M.nivPatient};
+  if(s.startsWith('ACT2_')) return {key:'act2-deterioration',src:M.act2IntroPatient};
+  return {key:'act1-assessment',src:M.act1InitialPatient};
+}
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function getLungAudio(){
   if(!lungAudio){
@@ -72,7 +79,22 @@ function updatePatientSoundUI(){
   if(o)o.remove();
 }
 function togglePatientSound(){updatePatientSoundUI();}
-function renderCenter(){center.innerHTML='';const b=document.createElement('div');b.className='patient-box';b.appendChild(createVideo(mediaForState[state]||M.act1InitialPatient));center.appendChild(b);updatePatientSoundUI();}
+function renderCenter(force=false){
+  const scene=centerSceneForState(state);
+  const currentVideo=center.querySelector('video.patient-video');
+  if(!force&&centerSceneKey===scene.key&&currentVideo){
+    if(currentVideo.paused)currentVideo.play().catch(()=>{});
+    updatePatientSoundUI();
+    return;
+  }
+  centerSceneKey=scene.key;
+  center.innerHTML='';
+  const b=document.createElement('div');
+  b.className='patient-box';
+  b.appendChild(createVideo(scene.src));
+  center.appendChild(b);
+  updatePatientSoundUI();
+}
 function patientBackground(){return '<div class="eyebrow">Act 1｜Initial Assessment</div><h1>病人背景</h1><div class="card patient-background-card"><p>68 歲男性，170 cm / 60 kg，AECOPD<br>昨天住急診入院，今日頻咳、痰黃</p></div>';}
 function act1Controls(){const x=[['Vital Signs','ACT1_VITALS'],['ABG','ACT1_ABG'],['Oxygen Therapy','ACT1_OXYGEN'],['Lung Sound','ACT1_LUNG_SOUND'],['CXR','ACT1_CXR'],['Main Treatment','ACT1_TREATMENT']];return '<div class="controls">'+x.map(([l,s])=>'<button class="btn '+(state===s?'active':'')+'" data-state="'+s+'">'+l+'</button>').join('')+'</div>';}
 function evidenceCards(){const order=['vitals','abg','oxygen','lung','cxr'];return '<div class="eyebrow">Clinical Evidence Board</div><h2>Clinical Evidence Board</h2><p class="muted small">出現過的資料不消失；評估後持續累積。</p><div class="evidence-grid">'+order.filter(k=>evidence.has(k)).map(k=>{const x=D.act1.evidence[k];return '<div class="evidence-card"><h3>'+esc(x.title)+'</h3><p>'+x.lines.map(esc).join('\n')+'</p></div>';}).join('')+'</div>';}
