@@ -119,3 +119,51 @@ html,body{background:#eef2f5;color:#0b3154}
   background:#edf9f2;color:#0e5e38;font-size:25px;font-weight:800
 }
 .correct-order{border-left-color:#4caf7a!important;background:#f4fbf6!important;color:#0e5e38!important}
+
+/* Session login and end-of-scenario learning satisfaction */
+body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filter:blur(3px);pointer-events:none}
+.session-overlay{
+  position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+  background:rgba(5,22,43,.86);padding:24px;overflow:auto
+}
+.session-overlay.hidden{display:none}
+.session-card{
+  width:min(920px,94vw);max-height:94vh;overflow:auto;background:#fff;color:#123b60;
+  border-radius:26px;padding:34px 38px;box-shadow:0 30px 90px rgba(0,0,0,.35);
+  border:1px solid #c8dbe8
+}
+.session-brand{font-size:16px;font-weight:900;color:#0b5f94;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.session-card h1{font-size:34px;margin:0 0 8px;color:#0b3154}
+.session-subtitle{font-size:18px!important;color:#61778a!important;margin:0 0 24px!important}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.field{display:flex;flex-direction:column;gap:8px;font-size:18px;font-weight:800}
+.field.full{grid-column:1/-1}
+.field input,.field select{
+  width:100%;font:inherit;font-weight:500;padding:13px 14px;border:2px solid #bdd2e1;border-radius:12px;background:#fbfdff;color:#123b60
+}
+.field small{font-size:13px;font-weight:500;color:#718597}
+.code-row{display:grid;grid-template-columns:1fr auto;gap:10px}
+.mini-btn{border:1px solid #77a8c8;background:#eef6fb;color:#13486d;border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer}
+.profession-group{border:1px solid #cfdee9;border-radius:16px;padding:16px 18px;margin:22px 0}
+.profession-group legend{font-size:18px;font-weight:900;padding:0 8px}
+.profession-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.profession-grid label{display:flex;align-items:center;gap:8px;padding:10px;border-radius:10px;background:#f3f8fc;font-size:16px;font-weight:700}
+.profession-grid input{width:19px;height:19px}
+.form-error{min-height:24px;color:#a32626;font-weight:800;margin:8px 0}
+.primary-form-btn{
+  width:100%;border:0;border-radius:14px;padding:16px 20px;background:#0b5f94;color:#fff;font-size:20px;font-weight:900;cursor:pointer
+}
+.survey-card{width:min(1040px,96vw)}
+.survey-question{border:1px solid #d3e1eb;border-radius:14px;padding:16px 18px;margin:12px 0;background:#fbfdff}
+.survey-question .qtext{font-size:18px;font-weight:800;margin-bottom:12px;line-height:1.45}
+.likert-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.likert-option{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px;border:1px solid #c8dae7;border-radius:10px;background:#fff;font-size:14px;font-weight:800;cursor:pointer}
+.likert-option input{width:20px;height:20px}
+.thankyou-card{text-align:center;max-width:620px}
+.thankyou-card p{font-size:20px!important}
+#survey-summary{margin:18px 0;padding:14px;background:#f2f8fc;border-radius:12px;font-size:16px}
+@media(max-width:760px){
+  .form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}
+  .profession-grid{grid-template-columns:repeat(2,1fr)}
+  .likert-row{grid-template-columns:repeat(5,minmax(52px,1fr))}
+}
