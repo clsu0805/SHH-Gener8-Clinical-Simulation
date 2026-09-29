@@ -151,7 +151,7 @@ function renderCenter(force=false){
   center.appendChild(b);
   updatePatientSoundUI();
 }
-function patientBackground(){return '<div class="eyebrow">Act 1｜Initial Assessment</div><h1>病人背景</h1><div class="card patient-background-card"><p>68 歲男性，170 cm / 60 kg，AECOPD<br>昨天住急診入院，今日頻咳、痰黃</p></div>';}
+function patientBackground(){return '<div class="eyebrow">Act 1｜Initial Assessment</div><div class="patient-background-head"><h1>病人背景</h1><div class="card patient-background-card"><p>68 歲男性，170 cm / 60 kg，AECOPD<br>昨天住急診入院，今日頻咳、痰黃</p></div></div>';}
 function act1Controls(){const x=[['Vital Signs','ACT1_VITALS'],['ABG','ACT1_ABG'],['Oxygen Therapy','ACT1_OXYGEN'],['Lung Sound','ACT1_LUNG_SOUND'],['CXR','ACT1_CXR'],['Main Treatment','ACT1_TREATMENT']];return '<div class="controls">'+x.map(([l,s])=>'<button class="btn '+(state===s?'active':'')+'" data-state="'+s+'">'+l+'</button>').join('')+'</div>';}
 function evidenceCards(){const order=['vitals','abg','oxygen','lung','cxr'];return '<div class="eyebrow">Clinical Evidence Board</div><h2>Clinical Evidence Board</h2><p class="muted small">出現過的資料不消失；評估後持續累積。</p><div class="evidence-grid">'+order.filter(k=>evidence.has(k)).map(k=>{const x=D.act1.evidence[k];return '<div class="evidence-card"><h3>'+esc(x.title)+'</h3><p>'+x.lines.map(esc).join('\n')+'</p></div>';}).join('')+'</div>';}
 function addEvidence(s){const m={ACT1_VITALS:'vitals',ACT1_ABG:'abg',ACT1_OXYGEN:'oxygen'};if(m[s])evidence.add(m[s]);}
