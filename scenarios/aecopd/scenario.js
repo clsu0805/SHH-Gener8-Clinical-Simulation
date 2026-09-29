@@ -356,7 +356,19 @@ function abg(){
 function treatment(){txSelected.clear();right.innerHTML=monitor(M.act2Monitor)+'<h2>Main Treatment</h2><p class="small muted">請選擇目前優先處置。</p><div class="option-grid">'+D.act2.treatmentOptions.map((x,i)=>'<button class="btn dark" data-tx="'+i+'">'+esc(x.label)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the four core immediate treatments.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>selectTx(b,+b.dataset.tx));}
 function selectTx(btn,i){const o=D.act2.treatmentOptions[i];recordLearningEvent('act2_treatment',o.label,o.correct===true);if(o.correct===true){txSelected.add(i);btn.classList.add('correct');}else if(o.correct==='followup'){btn.classList.add('active');document.getElementById('feedback').textContent='Follow-up ABG is an important reassessment step after NIV.';return;}else btn.classList.add('wrong');if(txSelected.size===4){document.getElementById('feedback').textContent='✓ Core treatment selections confirmed. Preparing NIV.';setTimeout(()=>setState('ACT2_TREATMENT_CONFIRMED'),900);}}
 function confirmed(){const correct=D.act2.treatmentOptions.filter(o=>o.correct===true);right.innerHTML=monitor(M.act2Monitor)+'<h2>主要處置｜正確處置確認</h2><div class="order-wall">'+correct.map(o=>'<div class="order correct-order">✓ '+esc(o.label)+'</div>').join('')+'</div><div class="feedback">正確處置確認：準備啟動 NIV</div><button id="start-niv" class="btn dark next-major">▶ 啟動 NIV → 查看治療後狀態</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
-function niv(){right.innerHTML='<div class="eyebrow">NIV 後動態監測</div>'+monitor(M.nivMonitor)+'<h2>Confirmed orders</h2><div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div><div class="completion-banner">AECOPD Scenario v1.0｜NIV initiated｜病人安靜休息，呼吸逐步平穩</div><button id="open-survey" class="btn dark next-major">完成教案｜填寫 5 題學習滿意度 →</button>';mountMonitor(M.nivMonitor);document.getElementById('open-survey').onclick=openSatisfactionSurvey;}
+function niv(){
+  right.innerHTML=
+    '<div class="act2-niv-right">'+
+      '<div class="eyebrow">NIV 後動態監測</div>'+
+      monitor(M.nivMonitor)+
+      '<h2>Confirmed orders</h2>'+
+      '<div class="order-wall">'+D.act2.confirmed.map(x=>'<div class="order">✓ '+esc(x)+'</div>').join('')+'</div>'+
+      '<div class="completion-banner">AECOPD Scenario v1.0｜NIV initiated｜病人安靜休息，呼吸逐步平穩</div>'+
+      '<button id="open-survey" class="btn dark next-major survey-final-btn">完成教案｜填寫 5 題學習滿意度 →</button>'+
+    '</div>';
+  mountMonitor(M.nivMonitor);
+  document.getElementById('open-survey').onclick=openSatisfactionSurvey;
+}
 function setState(s){
   pauseLungAudio();
   state=s;
