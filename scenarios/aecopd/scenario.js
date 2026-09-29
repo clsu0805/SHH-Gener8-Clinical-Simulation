@@ -269,7 +269,19 @@ function renderAct1Treatment(){
       '30 分鐘內重新評估並 repeat ABG'
     ];
     left.innerHTML='<div class="eyebrow">左牆｜主要處置</div><h1>正確主要處置</h1><div class="correct-treatment-list">'+correctMainTreatments.map(x=>'<div class="correct-treatment-item">✓ '+esc(x)+'</div>').join('')+'</div><div class="summary-panel"><h2>治療重點</h2><ul>'+summary.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
-    right.innerHTML=act1OrderWall()+'<div class="selected-treatment-grid"><img src="assets/images/medication-options.webp" alt="Selected medication reference"><img src="assets/images/oxygen-options.webp" alt="Selected oxygen reference"></div><button id="to-act2" class="btn dark next-major act1-to-act2-btn">6 小時後情況改變 →</button>';
+    const finalAct1Orders=[
+      '維持呼吸道暢通，必要時協助清除分泌物',
+      'Combivent 2.5 mL via nebulization Q6h PRN',
+      'Ceftriaxone 1 g IV q24h',
+      'Venturi Mask 28% — controlled oxygen, target SpO₂ 88–92%',
+      '30 分鐘內重新評估呼吸狀況'
+    ];
+    right.innerHTML=
+      '<div class="eyebrow">右牆｜Medical Order Wall</div>'+
+      '<h2>Medical Order Wall</h2>'+
+      '<div class="order-wall">'+finalAct1Orders.map(x=>'<div class="order">'+esc(x)+'</div>').join('')+'</div>'+
+      '<div class="selected-treatment-grid"><img src="assets/images/medication-options.webp" alt="Selected medication reference"><img src="assets/images/oxygen-options.webp" alt="Selected oxygen reference"></div>'+
+      '<button id="to-act2" class="btn dark next-major act1-to-act2-btn">6 小時後情況改變 →</button>';
     document.getElementById('to-act2').onclick=()=>setState('ACT2_OVERVIEW');
   }
 }
