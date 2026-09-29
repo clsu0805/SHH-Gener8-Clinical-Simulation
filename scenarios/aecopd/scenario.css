@@ -341,3 +341,18 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
     font-size:22px!important;
   }
 }
+
+
+/* ACT 2 ABG lower-right navigation */
+.act2-abg-next-actions{
+  width:100%;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  margin-top:22px;
+  padding-right:8%;
+  padding-bottom:10px;
+}
+.act2-abg-next-actions .act2-next-btn{
+  min-width:330px;
+}
