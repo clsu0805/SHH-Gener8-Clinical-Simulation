@@ -192,8 +192,10 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
 }
 
 /* Compact Act 1 patient background and CXR options */
-.patient-background-card{padding:18px 24px;margin:10px 0 14px}
-.patient-background-card p{margin:0;font-size:29px;line-height:1.45}
+.patient-background-head{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;margin:0 0 10px}
+.patient-background-head h1{margin:0!important;white-space:nowrap}
+.patient-background-card{padding:12px 18px;margin:0;min-height:0}
+.patient-background-card p{margin:0;font-size:25px;line-height:1.35}
 .cxr-question-panel{padding:14px 16px;margin-top:12px}
 .cxr-question-panel h3{margin:0 0 8px}
 .cxr-question-layout{display:grid;grid-template-columns:270px 1fr;gap:16px;align-items:start}
@@ -387,4 +389,16 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
   flex:0 0 auto;
   position:relative;
   z-index:6;
+}
+
+
+/* Raise Act 1 assessment content after compact patient header */
+.patient-background-head + .controls{
+  margin-top:10px;
+}
+.question-panel{
+  margin-top:10px;
+}
+.cxr-question-panel{
+  margin-top:8px;
 }
