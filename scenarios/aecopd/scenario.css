@@ -356,3 +356,35 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
 .act2-abg-next-actions .act2-next-btn{
   min-width:330px;
 }
+
+
+/* ACT 2 NIV survey button visibility */
+.act2-niv-right{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  padding-bottom:110px;
+}
+.act2-niv-right .monitor-video{
+  height:250px;
+}
+.act2-niv-right .order-wall{
+  gap:8px;
+}
+.act2-niv-right .order{
+  padding:10px 14px;
+  font-size:23px;
+}
+.act2-niv-right .completion-banner{
+  margin-top:12px;
+  padding:14px 16px;
+  font-size:22px;
+}
+.survey-final-btn{
+  margin-top:14px!important;
+  margin-bottom:92px!important;
+  min-height:74px;
+  flex:0 0 auto;
+  position:relative;
+  z-index:6;
+}
