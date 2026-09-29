@@ -402,3 +402,12 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
 .cxr-question-panel{
   margin-top:8px;
 }
+
+
+/* Act 1 summary transition button */
+.act1-to-act2-btn{
+  position:relative;
+  top:-30px;
+  margin-top:8px!important;
+  margin-bottom:0!important;
+}
