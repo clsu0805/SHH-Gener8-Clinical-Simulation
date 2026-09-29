@@ -69,7 +69,7 @@ The release must not be approved until all of these are verified from the GitHub
 - [x] Lung Sound correct answer: Bilateral expiratory wheezing with decreased air entry.
 - [x] ABG: pH 7.30 / PaCO2 68 / PaO2 52 / HCO3 34 / SaO2 83%.
 - [x] ABG correct interpretation: Acute-on-chronic hypercapnic respiratory failure with respiratory acidosis.
-- [x] Core treatment selections remain second bronchodilator, airway clearance, NIV, and Prednisolone.
+- [x] Core treatment selections remain second bronchodilator, airway clearance, NIV, and Methylprednisolone 32 mg IV q24h.
 - [x] Follow-up ABG remains a post-NIV reassessment step.
 - [x] NIV response retains RR 18–20/min and SpO2 90–93%.
 
