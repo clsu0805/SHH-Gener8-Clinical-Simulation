@@ -263,7 +263,7 @@ function renderAct1Treatment(){
     const summary=[
       'Venturi Mask 28%：controlled oxygen，目標 SpO₂ 88–92%',
       'Combivent 2.5 mL via nebulization：短效支氣管擴張',
-      'Prednisolone 40 mg PO once daily × 5 days',
+      'Methylprednisolone 32 mg IV q24h',
       'Ceftriaxone 1 g IV q24h',
       'Airway clearance：鼓勵咳痰，必要時清除分泌物',
       '30 分鐘內重新評估並 repeat ABG'
