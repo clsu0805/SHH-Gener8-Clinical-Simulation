@@ -234,3 +234,110 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
   .member-number{padding-bottom:0}
   .team-member-heading{flex-direction:column}
 }
+
+
+/* ACT 2 Lung Sound right-wall layout */
+.act2-right-lung{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
+.act2-monitor-section{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  margin-bottom:18px;
+}
+.act2-monitor-section .eyebrow{
+  width:100%;
+  text-align:left;
+  margin-bottom:10px;
+}
+.act2-monitor-large{
+  width:76%;
+  min-width:760px;
+  max-width:1120px;
+  height:320px;
+  background:#000;
+  border-radius:16px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:0;
+  margin-right:auto;
+}
+.act2-monitor-large .monitor-video{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+  border-radius:16px;
+  margin:0;
+}
+.act2-lung-section{
+  width:100%;
+}
+.act2-lung-section h2{
+  margin:4px 0 14px;
+}
+.act2-lung-section .lung-audio-controls{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  width:100%;
+  gap:10px;
+  margin-bottom:10px;
+}
+.act2-lung-section .lung-audio-controls .btn{
+  min-height:66px;
+  font-size:21px;
+}
+.act2-lung-options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  width:100%;
+  gap:10px!important;
+}
+.act2-lung-options .btn{
+  min-height:72px;
+  font-size:23px;
+  line-height:1.25;
+}
+.act2-lung-next-actions{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:24px;
+  margin-top:22px;
+  padding-bottom:12px;
+}
+.act2-next-btn{
+  min-width:260px;
+  min-height:76px;
+  padding:12px 28px;
+  background:#c8eaf8!important;
+  color:#15314c!important;
+  border:3px solid #16364d!important;
+  border-radius:14px;
+  font-size:28px!important;
+  font-weight:800;
+}
+.act2-next-btn:hover{
+  background:#b5e2f5!important;
+}
+@media(max-width:1200px){
+  .act2-monitor-large{
+    width:84%;
+    min-width:0;
+    height:250px;
+  }
+  .act2-next-btn{
+    min-width:200px;
+    min-height:64px;
+    font-size:22px!important;
+  }
+}
