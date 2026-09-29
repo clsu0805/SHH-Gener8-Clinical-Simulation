@@ -300,7 +300,40 @@ function act2Left(done=false){if(done)return '<div class="eyebrow">Treatment Res
 function monitor(src){return '<div class="eyebrow">Dynamic Vital Monitor</div><div id="monitor-slot"></div>';}
 function mountMonitor(src){const s=document.getElementById('monitor-slot');if(s)s.appendChild(createVideo(src,'monitor-video'));}
 function overview(){right.innerHTML=monitor(M.act2Monitor)+'<h2>重新評估</h2><div class="option-grid"><button class="btn dark" data-state="ACT2_LUNG_SOUND">Lung Sound</button><button class="btn dark" data-state="ACT2_ABG">ABG</button><button class="btn dark" data-state="ACT2_TREATMENT">Main Treatment</button></div>';mountMonitor(M.act2Monitor);bindStates();}
-function lung(){right.innerHTML=monitor(M.act2Monitor)+'<h2>Lung Sound</h2><div class="lung-audio-controls"><button id="play-lung" class="btn dark">▶ Play respiratory sound</button><button id="pause-lung" class="btn dark">⏸ Pause</button></div><div class="option-grid" style="margin-top:14px">'+D.act2.lungOptions.map((x,i)=>'<button class="btn dark" data-lung="'+i+'">'+esc(x)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the best description.</div>';mountMonitor(M.act2Monitor);document.getElementById('play-lung').onclick=()=>playLungAudio('feedback');document.getElementById('pause-lung').onclick=pauseLungAudio;document.querySelectorAll('[data-lung]').forEach(b=>b.onclick=()=>{const ans=D.act2.lungOptions[+b.dataset.lung],ok=ans===D.act2.lungCorrect;recordLearningEvent('act2_lung_sound',ans,ok);b.classList.add(ok?'correct':'wrong');document.getElementById('feedback').textContent=ok?'✓ '+D.act2.lungCorrect:'✕ Reassess airflow limitation in worsening AECOPD.';});}
+function lung(){
+  right.innerHTML=
+    '<div class="act2-right-lung">'+
+      '<div class="act2-monitor-section">'+
+        '<div class="eyebrow">Dynamic Vital Monitor</div>'+
+        '<div class="act2-monitor-large" id="monitor-slot"></div>'+
+      '</div>'+
+      '<div class="act2-lung-section">'+
+        '<h2>Lung Sound</h2>'+
+        '<div class="lung-audio-controls">'+
+          '<button id="play-lung" class="btn dark">▶ Play respiratory sound</button>'+
+          '<button id="pause-lung" class="btn dark">⏸ Pause</button>'+
+        '</div>'+
+        '<div class="option-grid act2-lung-options">'+
+          D.act2.lungOptions.map((x,i)=>'<button class="btn dark" data-lung="'+i+'">'+esc(x)+'</button>').join('')+
+        '</div>'+
+        '<div id="feedback" class="feedback">Select the best description.</div>'+
+        '<div class="act2-lung-next-actions">'+
+          '<button class="btn act2-next-btn" data-state="ACT2_ABG">ABG</button>'+
+          '<button class="btn act2-next-btn" data-state="ACT2_TREATMENT">Main Treatment</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  mountMonitor(M.act2Monitor);
+  document.getElementById('play-lung').onclick=()=>playLungAudio('feedback');
+  document.getElementById('pause-lung').onclick=pauseLungAudio;
+  document.querySelectorAll('[data-lung]').forEach(b=>b.onclick=()=>{
+    const ans=D.act2.lungOptions[+b.dataset.lung],ok=ans===D.act2.lungCorrect;
+    recordLearningEvent('act2_lung_sound',ans,ok);
+    b.classList.add(ok?'correct':'wrong');
+    document.getElementById('feedback').textContent=ok?'✓ '+D.act2.lungCorrect:'✕ Reassess airflow limitation in worsening AECOPD.';
+  });
+  bindStates();
+}
 function abg(){right.innerHTML=monitor(M.act2Monitor)+'<h2>ABG</h2><div class="badge-row">'+D.act2.abg.map(x=>'<span class="badge">'+esc(x)+'</span>').join('')+'</div><div class="option-grid" style="margin-top:16px">'+D.act2.abgOptions.map((x,i)=>'<button class="btn dark" data-abg="'+i+'">'+esc(x)+'</button>').join('')+'</div><div id="feedback" class="feedback">Interpret the ABG.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-abg]').forEach(b=>b.onclick=()=>{const ans=D.act2.abgOptions[+b.dataset.abg],ok=ans===D.act2.abgCorrect;recordLearningEvent('act2_abg',ans,ok);b.classList.add(ok?'correct':'wrong');document.getElementById('feedback').textContent=ok?'✓ '+D.act2.abgCorrect:'✕ Re-integrate pH, PaCO₂ and HCO₃⁻.';});}
 function treatment(){txSelected.clear();right.innerHTML=monitor(M.act2Monitor)+'<h2>Main Treatment</h2><p class="small muted">請選擇目前優先處置。</p><div class="option-grid">'+D.act2.treatmentOptions.map((x,i)=>'<button class="btn dark" data-tx="'+i+'">'+esc(x.label)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the four core immediate treatments.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>selectTx(b,+b.dataset.tx));}
 function selectTx(btn,i){const o=D.act2.treatmentOptions[i];recordLearningEvent('act2_treatment',o.label,o.correct===true);if(o.correct===true){txSelected.add(i);btn.classList.add('correct');}else if(o.correct==='followup'){btn.classList.add('active');document.getElementById('feedback').textContent='Follow-up ABG is an important reassessment step after NIV.';return;}else btn.classList.add('wrong');if(txSelected.size===4){document.getElementById('feedback').textContent='✓ Core treatment selections confirmed. Preparing NIV.';setTimeout(()=>setState('ACT2_TREATMENT_CONFIRMED'),900);}}
