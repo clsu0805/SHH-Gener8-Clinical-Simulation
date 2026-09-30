@@ -148,5 +148,20 @@ function getRanking(sessionId=null){
   });
 }
 
-window.Gener8API={enabled,startSession,recordEvent,saveSatisfaction,completeSession,getRanking,getSessionId:()=>apiSessionId,getCalculatedScore:calculatedScore};
+async function getRankingWithRetry(sessionId=null,retries=3){
+  let lastError=null;
+  for(let i=0;i<retries;i++){
+    try{
+      const result=await getRanking(sessionId);
+      if(result?.rank&&result?.total) return result;
+      lastError=new Error('Ranking not ready');
+    }catch(err){
+      lastError=err;
+    }
+    await new Promise(resolve=>setTimeout(resolve,700*(i+1)));
+  }
+  throw lastError||new Error('Ranking unavailable');
+}
+
+window.Gener8API={enabled,startSession,recordEvent,saveSatisfaction,completeSession,getRanking:getRankingWithRetry,getSessionId:()=>apiSessionId,getCalculatedScore:calculatedScore};
 })();
