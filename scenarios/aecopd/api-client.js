@@ -158,6 +158,37 @@ function getRanking(sessionId=null){
   });
 }
 
+function completeAndGetRanking(durationSeconds,totalScore=null){
+  const sid=apiSessionId||localStorage.getItem('gener8ApiSessionId');
+  if(!enabled()||!sid) return Promise.resolve(null);
+  const score=totalScore==null?calculatedScore():Number(totalScore);
+  return new Promise((resolve,reject)=>{
+    const cb='gener8Finish_'+Date.now()+'_'+Math.floor(Math.random()*100000);
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{cleanup();reject(new Error('Finish ranking timeout'));},10000);
+    function cleanup(){
+      clearTimeout(timer);
+      try{delete window[cb];}catch(e){window[cb]=undefined;}
+      script.remove();
+    }
+    window[cb]=data=>{
+      cleanup();
+      if(data&&data.success!==false) resolve(data);
+      else reject(new Error(data?.error||'Finish ranking unavailable'));
+    };
+    const sep=endpoint().includes('?')?'&':'?';
+    script.src=endpoint()+sep+
+      'action=complete_and_rank'+
+      '&session_id='+encodeURIComponent(sid)+
+      '&score='+encodeURIComponent(score)+
+      '&duration_sec='+encodeURIComponent(durationSeconds)+
+      '&callback='+encodeURIComponent(cb)+
+      '&_='+Date.now();
+    script.onerror=()=>{cleanup();reject(new Error('Finish ranking request failed'));};
+    document.head.appendChild(script);
+  });
+}
+
 async function getRankingWithRetry(sessionId=null,retries=3){
   let lastError=null;
   for(let i=0;i<retries;i++){
@@ -173,5 +204,5 @@ async function getRankingWithRetry(sessionId=null,retries=3){
   throw lastError||new Error('Ranking unavailable');
 }
 
-window.Gener8API={enabled,startSession,recordEvent,saveSatisfaction,completeSession,getRanking:getRankingWithRetry,getSessionId:()=>apiSessionId,getCalculatedScore:calculatedScore};
+window.Gener8API={enabled,startSession,recordEvent,saveSatisfaction,completeSession,completeAndGetRanking,getRanking:getRankingWithRetry,getSessionId:()=>apiSessionId,getCalculatedScore:calculatedScore};
 })();
