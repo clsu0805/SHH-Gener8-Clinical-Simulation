@@ -1,6 +1,7 @@
 (()=>{'use strict';
 
 let apiSessionId=null;
+let eventSeq=0;
 const correctByQuestion=new Map();
 const wrongByQuestion=new Set();
 const requiredCorrectCounts={
@@ -34,6 +35,7 @@ async function startSession(meta){
   if(!enabled()) return null;
   correctByQuestion.clear();
   wrongByQuestion.clear();
+  eventSeq=0;
   apiSessionId=meta.code;
   localStorage.setItem('gener8ApiSessionId',apiSessionId);
 
@@ -63,6 +65,7 @@ async function startSession(meta){
 async function recordEvent(event){
   const sid=apiSessionId||localStorage.getItem('gener8ApiSessionId');
   if(!enabled()||!sid)return null;
+  eventSeq+=1;
   if(event.question_id){
     if(event.is_correct===false){
       // Once a wrong option has been selected, this whole scored question
@@ -82,7 +85,10 @@ async function recordEvent(event){
     selected_option:event.selected_option??'',
     is_correct:typeof event.is_correct==='boolean'?event.is_correct:'',
     attempt_number:event.attempt_number||'',
-    elapsed_ms:event.elapsed_ms||''
+    elapsed_ms:event.elapsed_ms||'',
+    timestamp:event.timestamp||new Date().toISOString(),
+    event_seq:event.event_seq||eventSeq,
+    event_type:event.event_type||'answer'
   });
 }
 
