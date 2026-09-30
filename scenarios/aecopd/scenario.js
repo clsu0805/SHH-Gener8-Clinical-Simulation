@@ -590,38 +590,56 @@ function initSurvey(){
     const err=document.getElementById('survey-error');
     if(answers.some(v=>!v)){err.textContent='請完成 5 題後再送出。';return;}
     err.textContent='';
+
     const average=answers.reduce((a,b)=>a+b,0)/answers.length;
-    const payload={session:sessionMeta||JSON.parse(localStorage.getItem('gener8AECOPDSession')||'null'),questions,answers,average:Number(average.toFixed(2)),submittedAt:new Date().toISOString()};
+    const payload={
+      session:sessionMeta||JSON.parse(localStorage.getItem('gener8AECOPDSession')||'null'),
+      questions,
+      answers,
+      average:Number(average.toFixed(2)),
+      submittedAt:new Date().toISOString()
+    };
     localStorage.setItem('gener8AECOPDLastSurvey',JSON.stringify(payload));
 
     const started=payload.session?.startedAt?new Date(payload.session.startedAt).getTime():Date.now();
     const durationSeconds=Math.max(0,Math.round((Date.now()-started)/1000));
     const score=window.Gener8API?.getCalculatedScore?.() ?? 0;
 
-    const surveyOverlay=document.getElementById('survey-overlay');
     const submitBtn=document.querySelector('#survey-form .primary-form-btn');
     if(submitBtn){
       submitBtn.disabled=true;
-      submitBtn.textContent='正在儲存並計算學習成果…';
+      submitBtn.textContent='正在儲存學習成果…';
     }
 
-    let ranking=null;
+    // Save satisfaction first, then immediately show results.
     if(window.Gener8API?.enabled?.()){
       try{await window.Gener8API.saveSatisfaction(answers);}catch(err){}
       try{await window.Gener8API.completeSession(durationSeconds,score);}catch(err){}
-      try{
-        await new Promise(resolve=>setTimeout(resolve,900));
-        ranking=await window.Gener8API.getRanking?.();
-      }catch(err){}
     }
 
+    const surveyOverlay=document.getElementById('survey-overlay');
     if(surveyOverlay) surveyOverlay.classList.add('hidden');
+    showTeamPerformance(score,durationSeconds,null);
+
+    // Ranking loads in the background and updates the third circle when ready.
+    if(window.Gener8API?.enabled?.()){
+      window.Gener8API.getRanking?.().then(ranking=>{
+        const rank=document.getElementById('performance-rank');
+        const note=document.getElementById('performance-rank-note');
+        if(rank&&ranking?.rank&&ranking?.total) rank.textContent='第 '+ranking.rank+' 名';
+        if(note&&ranking?.rank&&ranking?.total) note.textContent='目前共 '+ranking.total+' 組完成本教案';
+      }).catch(()=>{
+        const note=document.getElementById('performance-rank-note');
+        if(note) note.textContent='排名資料暫時無法讀取；答對率與通關時間已正常保存。';
+      });
+    }
+
     if(submitBtn){
       submitBtn.disabled=false;
       submitBtn.textContent='送出學習滿意度';
     }
-    showTeamPerformance(score,durationSeconds,ranking);
   };
+
   const finish=document.getElementById('finish-performance-btn');
   if(finish) finish.onclick=resetScenarioToLogin;
 }
