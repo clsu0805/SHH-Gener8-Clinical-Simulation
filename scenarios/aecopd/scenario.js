@@ -531,9 +531,9 @@ function resetScenarioToLogin(){
   localStorage.removeItem('gener8ApiSessionId');
 
   const surveyOverlay=document.getElementById('survey-overlay');
-  const thankyou=document.getElementById('survey-thankyou');
+  const performanceOverlay=document.getElementById('performance-overlay');
   if(surveyOverlay) surveyOverlay.classList.add('hidden');
-  if(thankyou) thankyou.classList.add('hidden');
+  if(performanceOverlay) performanceOverlay.classList.add('hidden');
 
   left.innerHTML='';
   center.innerHTML='';
@@ -556,25 +556,50 @@ function resetScenarioToLogin(){
   updatePatientSoundUI();
   updateStepUI();
 }
+function formatDuration(seconds){
+  const total=Math.max(0,Math.round(Number(seconds)||0));
+  const min=Math.floor(total/60);
+  const sec=total%60;
+  return String(min).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+function showTeamPerformance(score,durationSeconds){
+  const overlay=document.getElementById('performance-overlay');
+  const accuracy=document.getElementById('performance-accuracy');
+  const duration=document.getElementById('performance-duration');
+  const rank=document.getElementById('performance-rank');
+  if(accuracy) accuracy.textContent=Number(score||0).toFixed(2);
+  if(duration) duration.textContent=formatDuration(durationSeconds);
+  if(rank) rank.textContent='—';
+  if(overlay) overlay.classList.remove('hidden');
+}
 function initSurvey(){
-  document.getElementById('survey-form').onsubmit=e=>{
+  document.getElementById('survey-form').onsubmit=async e=>{
     e.preventDefault();
-    const questions=satisfactionQuestions;const answers=questions.map((_,i)=>Number(document.querySelector('input[name="q'+(i+1)+'"]:checked')?.value||0));
+    const questions=satisfactionQuestions;
+    const answers=questions.map((_,i)=>Number(document.querySelector('input[name="q'+(i+1)+'"]:checked')?.value||0));
     const err=document.getElementById('survey-error');
     if(answers.some(v=>!v)){err.textContent='請完成 5 題後再送出。';return;}
     err.textContent='';
     const average=answers.reduce((a,b)=>a+b,0)/answers.length;
     const payload={session:sessionMeta||JSON.parse(localStorage.getItem('gener8AECOPDSession')||'null'),questions,answers,average:Number(average.toFixed(2)),submittedAt:new Date().toISOString()};
     localStorage.setItem('gener8AECOPDLastSurvey',JSON.stringify(payload));
+
+    const started=payload.session?.startedAt?new Date(payload.session.startedAt).getTime():Date.now();
+    const durationSeconds=Math.max(0,Math.round((Date.now()-started)/1000));
+    const score=window.Gener8API?.getCalculatedScore?.() ?? 0;
+
+    const surveyOverlay=document.getElementById('survey-overlay');
+    if(surveyOverlay) surveyOverlay.classList.add('hidden');
+
     if(window.Gener8API?.enabled?.()){
-      window.Gener8API.saveSatisfaction(answers).catch(()=>{});
-      const started=payload.session?.startedAt?new Date(payload.session.startedAt).getTime():Date.now();
-      const durationSeconds=Math.max(0,Math.round((Date.now()-started)/1000));
-      window.Gener8API.completeSession(durationSeconds,null).catch(()=>{});
+      try{await window.Gener8API.saveSatisfaction(answers);}catch(err){}
+      try{await window.Gener8API.completeSession(durationSeconds,score);}catch(err){}
     }
-    resetScenarioToLogin();
+
+    showTeamPerformance(score,durationSeconds);
   };
-  document.getElementById('close-thankyou').onclick=resetScenarioToLogin;
+  const finish=document.getElementById('finish-performance-btn');
+  if(finish) finish.onclick=resetScenarioToLogin;
 }
 function applySensitivity(level){
   sensitivity=level;
