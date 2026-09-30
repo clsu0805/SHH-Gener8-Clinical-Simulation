@@ -34,7 +34,7 @@ const sensitivitySettings={
   normal:{label:'Normal',cooldown:110},
   high:{label:'High',cooldown:50}
 };
-let sensitivity=localStorage.getItem('gener8InteractionSensitivity')||'normal';
+let sensitivity=localStorage.getItem('gener8InteractionSensitivity')||'high';
 if(!sensitivitySettings[sensitivity]) sensitivity='normal';
 let lastInteractionAt=0;
 let centerSceneKey=null;
@@ -513,6 +513,8 @@ function openSatisfactionSurvey(){
 }
 function resetScenarioToLogin(){
   pauseLungAudio();
+  localStorage.setItem('gener8InteractionSensitivity','high');
+  sensitivity='high';
   document.querySelectorAll('video').forEach(v=>{try{v.pause();}catch(e){}});
   evidence.clear();
   act1Orders.clear();
