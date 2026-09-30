@@ -591,3 +591,50 @@ body[data-sensitivity="normal"] .btn:active{
 .performance-finish-btn{
   margin-top:8px;
 }
+
+
+/* Final centered two-circle Team Performance layout */
+.performance-card{
+  width:min(1040px,94vw)!important;
+  max-width:1040px!important;
+  text-align:center!important;
+  padding:42px 48px 46px!important;
+}
+.performance-card .session-subtitle,
+.performance-card .performance-rule,
+.performance-card .performance-rank-note{
+  display:none!important;
+}
+.performance-circles{
+  width:100%!important;
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  gap:84px!important;
+  flex-wrap:nowrap!important;
+  margin:44px auto 40px!important;
+}
+.performance-circle{
+  flex:0 0 292px!important;
+  width:292px!important;
+  height:292px!important;
+}
+.performance-circle:nth-child(n+3){
+  display:none!important;
+}
+.performance-finish-btn{
+  display:block!important;
+  width:min(560px,80%)!important;
+  margin:10px auto 0!important;
+}
+@media(max-width:760px){
+  .performance-circles{
+    flex-wrap:wrap!important;
+    gap:26px!important;
+  }
+  .performance-circle{
+    flex-basis:220px!important;
+    width:220px!important;
+    height:220px!important;
+  }
+}
