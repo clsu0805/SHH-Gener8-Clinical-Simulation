@@ -511,6 +511,49 @@ function openSatisfactionSurvey(){
   renderSurveyQuestions();
   document.getElementById('survey-overlay').classList.remove('hidden');
 }
+function resetScenarioToLogin(){
+  pauseLungAudio();
+  document.querySelectorAll('video').forEach(v=>{try{v.pause();}catch(e){}});
+  evidence.clear();
+  act1Orders.clear();
+  txSelected.clear();
+  mainTreatmentSelected.clear();
+  Object.keys(attemptCounts).forEach(k=>delete attemptCounts[k]);
+  sessionMeta=null;
+  state=D.states.ACT1_START;
+  stateStartedAt=Date.now();
+  centerSceneKey=null;
+  patientSoundEnabled=false;
+
+  localStorage.removeItem('gener8AECOPDSession');
+  localStorage.removeItem('gener8ApiSessionId');
+
+  const surveyOverlay=document.getElementById('survey-overlay');
+  const thankyou=document.getElementById('survey-thankyou');
+  if(surveyOverlay) surveyOverlay.classList.add('hidden');
+  if(thankyou) thankyou.classList.add('hidden');
+
+  left.innerHTML='';
+  center.innerHTML='';
+  right.innerHTML='';
+
+  const form=document.getElementById('session-form');
+  if(form) form.reset();
+  const countSelect=document.getElementById('participant-count');
+  if(countSelect) countSelect.value='1';
+  const code=document.getElementById('session-code');
+  if(code) code.value=generateSessionCode();
+  renderTeamMembers();
+
+  const login=document.getElementById('login-overlay');
+  if(login){
+    login.classList.remove('hidden');
+    login.style.display='flex';
+  }
+  document.body.classList.add('prelogin');
+  updatePatientSoundUI();
+  updateStepUI();
+}
 function initSurvey(){
   document.getElementById('survey-form').onsubmit=e=>{
     e.preventDefault();
@@ -527,11 +570,9 @@ function initSurvey(){
       const durationSeconds=Math.max(0,Math.round((Date.now()-started)/1000));
       window.Gener8API.completeSession(durationSeconds,null).catch(()=>{});
     }
-    document.getElementById('survey-overlay').classList.add('hidden');
-    document.getElementById('survey-summary').innerHTML='<strong>參加代號：</strong>'+esc(payload.session?.code||'—')+'<br><strong>5 題平均：</strong>'+payload.average+' / 5';
-    document.getElementById('survey-thankyou').classList.remove('hidden');
+    resetScenarioToLogin();
   };
-  document.getElementById('close-thankyou').onclick=()=>document.getElementById('survey-thankyou').classList.add('hidden');
+  document.getElementById('close-thankyou').onclick=resetScenarioToLogin;
 }
 function applySensitivity(level){
   sensitivity=level;
