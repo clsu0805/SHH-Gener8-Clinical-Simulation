@@ -566,20 +566,16 @@ function showTeamPerformance(score,durationSeconds,ranking=null){
   const overlay=document.getElementById('performance-overlay');
   const accuracy=document.getElementById('performance-accuracy');
   const duration=document.getElementById('performance-duration');
-  const rank=document.getElementById('performance-rank');
-  const note=document.getElementById('performance-rank-note');
+
+  // Defensive cleanup for older cached HTML: only keep accuracy + duration.
+  document.getElementById('performance-rank')?.closest('.performance-circle')?.remove();
+  document.querySelector('.performance-rule')?.remove();
+  document.getElementById('performance-rank-note')?.remove();
+  const subtitle=overlay?.querySelector('.session-subtitle');
+  if(subtitle) subtitle.remove();
+
   if(accuracy) accuracy.textContent=Number(score||0).toFixed(2);
   if(duration) duration.textContent=formatDuration(durationSeconds);
-  if(rank){
-    rank.textContent=ranking?.rank&&ranking?.total
-      ? '第 '+ranking.rank+' 名'
-      : '—';
-  }
-  if(note){
-    note.textContent=ranking?.rank&&ranking?.total
-      ? '目前共 '+ranking.total+' 組完成本教案'
-      : '排名資料暫時無法讀取；答對率與通關時間已正常保存。';
-  }
   if(overlay) overlay.classList.remove('hidden');
 }
 function initSurvey(){
