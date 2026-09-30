@@ -479,3 +479,15 @@ body[data-sensitivity="normal"] .btn:active{
 .likert-option{
   min-height:70px;
 }
+
+
+/* Gener8 pointer-down immediate activation */
+.btn.pointer-active,
+.primary-form-btn.pointer-active,
+.mini-btn.pointer-active,
+#toolbar button.pointer-active,
+#toolbar a.pointer-active{
+  outline:6px solid rgba(77,163,255,.42);
+  outline-offset:4px;
+  filter:brightness(.97);
+}
