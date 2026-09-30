@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const D=window.AECOPD_DATA,M=window.MEDIA_MANIFEST;
 const left=document.getElementById('left-wall'),center=document.getElementById('center-wall'),right=document.getElementById('right-wall'),stage=document.getElementById('stage');
-let state=D.states.ACT1_START,evidence=new Set(),act1Orders=new Set(),txSelected=new Set();
+let state=D.states.ACT1_START,evidence=new Set(),act1Orders=new Set(),txSelected=new Set(),mainTreatmentSelected=new Set();
 let sessionMeta=null;
 let stateStartedAt=Date.now();
 const attemptCounts={};
@@ -213,19 +213,19 @@ function renderAct1(){
 
 function act1TreatmentMenu(){
   const items=[
-    ['維持呼吸道暢通，必要時抽痰','airway'],
-    ['藥物治療','medication'],
-    ['調整氧氣並密切監測 SpO₂','oxygen'],
-    ['心電圖檢查','ekg'],
-    ['先給予利尿劑 20 mg IV','diuretic'],
-    ['30 分鐘內重新評估呼吸狀況','reassess'],
-    ['電腦斷層檢查','ct']
+    ['維持呼吸道暢通，必要時抽痰','airway',true],
+    ['藥物治療','medication',true],
+    ['調整氧氣並密切監測 SpO₂','oxygen',true],
+    ['心電圖檢查','ekg',false],
+    ['先給予利尿劑 20 mg IV','diuretic',false],
+    ['30 分鐘內重新評估呼吸狀況','reassess',true],
+    ['電腦斷層檢查','ct',false]
   ];
   const active=state==='ACT1_TX_MEDICATION'?'medication':state==='ACT1_TX_OXYGEN'?'oxygen':state==='ACT1_TX_REASSESS'?'reassess':'';
-  return '<div class="eyebrow">左牆｜主要處置</div><h1>主要處置</h1><p class="muted small">選擇目前優先處置，逐步建立 Medical Order Wall。</p><div class="tx-menu">'+items.map(([label,key])=>'<button class="btn '+(active===key?'active ':'')+(key==='airway'?'correct ':'')+'" data-a1tx="'+key+'">'+esc(label)+'</button>').join('')+'</div>';
+  return '<div class="eyebrow">左牆｜主要處置</div><h1>主要處置</h1><p class="muted small">選擇目前優先處置，逐步建立 Medical Order Wall。</p><div class="tx-menu">'+items.map(([label,key])=>'<button class="btn '+(active===key?'active ':'')+(mainTreatmentSelected.has(key)?'correct ':'')+'" data-a1tx="'+key+'">'+esc(label)+'</button>').join('')+'</div>';
 }
 function act1OrderWall(){
-  const base=['維持呼吸道暢通，必要時協助清除分泌物'];
+  const base=mainTreatmentSelected.has('airway')?['維持呼吸道暢通，必要時協助清除分泌物']:[];
   return '<div class="eyebrow">右牆｜Medical Order Wall</div><h2>Medical Order Wall</h2><div class="order-wall">'+base.concat([...act1Orders]).map(x=>'<div class="order">'+esc(x)+'</div>').join('')+'</div>';
 }
 function renderAct1Treatment(){
@@ -248,6 +248,7 @@ function renderAct1Treatment(){
   }
 
   if(state==='ACT1_TX_REASSESS'){
+    mainTreatmentSelected.add('reassess');
     if(!act1Orders.has(D.act1.treatment.reassessment)) act1Orders.add(D.act1.treatment.reassessment);
     right.innerHTML=act1OrderWall()+'<div class="feedback">✓ '+esc(D.act1.treatment.reassessment)+'</div><button id="show-act1-summary" class="btn dark next-major">查看治療重點 →</button>';
     document.getElementById('show-act1-summary').onclick=()=>setState('ACT1_TREATMENT_SUMMARY');
@@ -286,10 +287,16 @@ function renderAct1Treatment(){
   }
 }
 function handleAct1TxMenu(key){
+  if(key==='airway'){
+    mainTreatmentSelected.add('airway');
+    renderAct1Treatment();
+    return;
+  }
   if(key==='medication') return setState('ACT1_TX_MEDICATION');
   if(key==='oxygen') return setState('ACT1_TX_OXYGEN');
   if(key==='reassess') return setState('ACT1_TX_REASSESS');
-  if(key==='airway') return;
+  const btn=document.querySelector('[data-a1tx="'+key+'"]');
+  if(btn) btn.classList.add('wrong');
   const note=document.querySelector('.feedback');
   if(note) note.textContent='✕ 此項不是附件簡報中的優先處置。';
 }
@@ -300,6 +307,13 @@ function selectAct1(btn,opt){
   btn.classList.add(opt.correct?'correct':'wrong');
   if(opt.correct){
     act1Orders.add(opt.label);
+    if(state==='ACT1_TX_MEDICATION'){
+      const allCorrect=D.act1.treatment.medicationOptions.filter(o=>o.correct).every(o=>act1Orders.has(o.label));
+      if(allCorrect) mainTreatmentSelected.add('medication');
+    }
+    if(state==='ACT1_TX_OXYGEN'){
+      mainTreatmentSelected.add('oxygen');
+    }
     if(feedback)feedback.textContent='✓ Correct order added to Medical Order Wall.';
   }else{
     if(feedback)feedback.textContent='✕ This order is not selected in the approved scenario.';
