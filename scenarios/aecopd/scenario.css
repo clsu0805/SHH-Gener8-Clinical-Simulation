@@ -573,3 +573,21 @@ body[data-sensitivity="normal"] .btn:active{
   .performance-circle{width:205px;height:205px}
   .performance-circle-value{font-size:38px}
 }
+
+
+/* Two-metric Team Performance layout */
+.performance-card{
+  max-width:980px;
+}
+.performance-circles{
+  gap:72px;
+  margin-top:40px;
+  margin-bottom:38px;
+}
+.performance-circle{
+  width:280px;
+  height:280px;
+}
+.performance-finish-btn{
+  margin-top:8px;
+}
