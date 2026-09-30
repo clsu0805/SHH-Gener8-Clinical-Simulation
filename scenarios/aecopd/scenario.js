@@ -155,7 +155,12 @@ function patientBackground(){return '<div class="eyebrow">Act 1｜Initial Assess
 function act1Controls(){const x=[['Vital Signs','ACT1_VITALS'],['ABG','ACT1_ABG'],['Oxygen Therapy','ACT1_OXYGEN'],['Lung Sound','ACT1_LUNG_SOUND'],['CXR','ACT1_CXR'],['Main Treatment','ACT1_TREATMENT']];return '<div class="controls">'+x.map(([l,s])=>'<button class="btn '+(state===s?'active':'')+'" data-state="'+s+'">'+l+'</button>').join('')+'</div>';}
 function evidenceCards(){const order=['vitals','abg','oxygen','lung','cxr'];return '<div class="eyebrow">Clinical Evidence Board</div><h2>Clinical Evidence Board</h2><p class="muted small">出現過的資料不消失；評估後持續累積。</p><div class="evidence-grid">'+order.filter(k=>evidence.has(k)).map(k=>{const x=D.act1.evidence[k];return '<div class="evidence-card"><h3>'+esc(x.title)+'</h3><p>'+x.lines.map(esc).join('\n')+'</p></div>';}).join('')+'</div>';}
 function addEvidence(s){const m={ACT1_VITALS:'vitals',ACT1_ABG:'abg',ACT1_OXYGEN:'oxygen'};if(m[s])evidence.add(m[s]);}
-function bindStates(){document.querySelectorAll('[data-state]').forEach(b=>b.onclick=()=>setState(b.dataset.state));}
+function bindStates(){
+  document.querySelectorAll('[data-state]').forEach(b=>b.onclick=()=>{
+    recordLearningEvent('navigation',b.textContent.trim(),null,'navigation');
+    setState(b.dataset.state);
+  });
+}
 function renderAct1(){
   left.innerHTML=patientBackground()+act1Controls();
   if(['ACT1_TREATMENT','ACT1_TX_MEDICATION','ACT1_TX_OXYGEN','ACT1_TX_REASSESS','ACT1_TREATMENT_SUMMARY'].includes(state))renderAct1Treatment(); else right.innerHTML=evidenceCards();
@@ -168,7 +173,7 @@ function renderAct1(){
       <button class="btn dark" data-a1lung="3">Inspiratory stridor</button>
     </div><div id="a1lung-feedback" class="question-feedback">請先播放呼吸音再作答。</div></div>`;
     right.innerHTML=evidenceCards()+'<div id="a1lung-right-feedback" class="lung-right-feedback" aria-live="polite"></div>';
-    document.getElementById('play-act1-lung').onclick=()=>playLungAudio('a1lung-feedback');document.getElementById('pause-act1-lung').onclick=pauseLungAudio;
+    document.getElementById('play-act1-lung').onclick=()=>{recordLearningEvent('act1_lung_audio','播放呼吸音',null,'media');playLungAudio('a1lung-feedback');};document.getElementById('pause-act1-lung').onclick=()=>{recordLearningEvent('act1_lung_audio','暫停呼吸音',null,'media');pauseLungAudio();};
     document.querySelectorAll('[data-a1lung]').forEach(b=>b.onclick=()=>{
       const ok=b.dataset.a1lung==='1';
       recordLearningEvent('act1_lung_sound',b.textContent.trim(),ok);
@@ -251,7 +256,7 @@ function renderAct1Treatment(){
     mainTreatmentSelected.add('reassess');
     if(!act1Orders.has(D.act1.treatment.reassessment)) act1Orders.add(D.act1.treatment.reassessment);
     right.innerHTML=act1OrderWall()+'<div class="feedback">✓ '+esc(D.act1.treatment.reassessment)+'</div><button id="show-act1-summary" class="btn dark next-major">查看治療重點 →</button>';
-    document.getElementById('show-act1-summary').onclick=()=>setState('ACT1_TREATMENT_SUMMARY');
+    document.getElementById('show-act1-summary').onclick=()=>{recordLearningEvent('navigation','查看治療重點',null,'navigation');setState('ACT1_TREATMENT_SUMMARY');};
   }
 
   if(state==='ACT1_TREATMENT_SUMMARY'){
@@ -283,10 +288,13 @@ function renderAct1Treatment(){
       '<div class="order-wall">'+finalAct1Orders.map(x=>'<div class="order">'+esc(x)+'</div>').join('')+'</div>'+
       '<div class="selected-treatment-grid"><img src="assets/images/medication-options.webp" alt="Selected medication reference"><img src="assets/images/oxygen-options.webp" alt="Selected oxygen reference"></div>'+
       '<button id="to-act2" class="btn dark next-major act1-to-act2-btn">6 小時後情況改變 →</button>';
-    document.getElementById('to-act2').onclick=()=>setState('ACT2_OVERVIEW');
+    document.getElementById('to-act2').onclick=()=>{recordLearningEvent('navigation','6 小時後情況改變',null,'navigation');setState('ACT2_OVERVIEW');};
   }
 }
 function handleAct1TxMenu(key){
+  const btn=document.querySelector('[data-a1tx="'+key+'"]');
+  const label=btn?.textContent?.trim()||key;
+  recordLearningEvent('act1_main_treatment',label,null,'treatment_selection');
   if(key==='airway'){
     mainTreatmentSelected.add('airway');
     renderAct1Treatment();
@@ -295,7 +303,6 @@ function handleAct1TxMenu(key){
   if(key==='medication') return setState('ACT1_TX_MEDICATION');
   if(key==='oxygen') return setState('ACT1_TX_OXYGEN');
   if(key==='reassess') return setState('ACT1_TX_REASSESS');
-  const btn=document.querySelector('[data-a1tx="'+key+'"]');
   if(btn) btn.classList.add('wrong');
   const note=document.querySelector('.feedback');
   if(note) note.textContent='✕ 此項不是附件簡報中的優先處置。';
@@ -381,7 +388,7 @@ function abg(){
 }
 function treatment(){txSelected.clear();right.innerHTML=monitor(M.act2Monitor)+'<h2>Main Treatment</h2><p class="small muted">請選擇目前優先處置。</p><div class="option-grid">'+D.act2.treatmentOptions.map((x,i)=>'<button class="btn dark" data-tx="'+i+'">'+esc(x.label)+'</button>').join('')+'</div><div id="feedback" class="feedback">Select the four core immediate treatments.</div>';mountMonitor(M.act2Monitor);document.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>selectTx(b,+b.dataset.tx));}
 function selectTx(btn,i){const o=D.act2.treatmentOptions[i];recordLearningEvent('act2_treatment',o.label,o.correct===true);if(o.correct===true){txSelected.add(i);btn.classList.add('correct');}else if(o.correct==='followup'){btn.classList.add('active');document.getElementById('feedback').textContent='Follow-up ABG is an important reassessment step after NIV.';return;}else btn.classList.add('wrong');if(txSelected.size===4){document.getElementById('feedback').textContent='✓ Core treatment selections confirmed. Preparing NIV.';setTimeout(()=>setState('ACT2_TREATMENT_CONFIRMED'),900);}}
-function confirmed(){const correct=D.act2.treatmentOptions.filter(o=>o.correct===true);right.innerHTML=monitor(M.act2Monitor)+'<h2>主要處置｜正確處置確認</h2><div class="order-wall">'+correct.map(o=>'<div class="order correct-order">✓ '+esc(o.label)+'</div>').join('')+'</div><div class="feedback">正確處置確認：準備啟動 NIV</div><button id="start-niv" class="btn dark next-major">▶ 啟動 NIV → 查看治療後狀態</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>setState('ACT2_NIV_RESPONSE');}
+function confirmed(){const correct=D.act2.treatmentOptions.filter(o=>o.correct===true);right.innerHTML=monitor(M.act2Monitor)+'<h2>主要處置｜正確處置確認</h2><div class="order-wall">'+correct.map(o=>'<div class="order correct-order">✓ '+esc(o.label)+'</div>').join('')+'</div><div class="feedback">正確處置確認：準備啟動 NIV</div><button id="start-niv" class="btn dark next-major">▶ 啟動 NIV → 查看治療後狀態</button>';mountMonitor(M.act2Monitor);document.getElementById('start-niv').onclick=()=>{recordLearningEvent('navigation','啟動 NIV',null,'treatment_navigation');setState('ACT2_NIV_RESPONSE');};}
 function niv(){
   right.innerHTML=
     '<div class="act2-niv-right">'+
@@ -393,7 +400,7 @@ function niv(){
       '<button id="open-survey" class="btn dark next-major survey-final-btn">完成教案｜填寫 5 題學習滿意度 →</button>'+
     '</div>';
   mountMonitor(M.nivMonitor);
-  document.getElementById('open-survey').onclick=openSatisfactionSurvey;
+  document.getElementById('open-survey').onclick=()=>{recordLearningEvent('navigation','完成教案｜填寫學習滿意度',null,'navigation');openSatisfactionSurvey();};
 }
 function setState(s){
   pauseLungAudio();
