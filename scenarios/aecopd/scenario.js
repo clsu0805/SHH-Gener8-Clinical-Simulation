@@ -614,19 +614,14 @@ function initSurvey(){
       submitBtn.textContent='正在儲存學習成果…';
     }
 
-    let ranking=null;
     if(window.Gener8API?.enabled?.()){
       try{await window.Gener8API.saveSatisfaction(answers);}catch(err){}
-      try{
-        ranking=await window.Gener8API.completeAndGetRanking?.(durationSeconds,score);
-      }catch(err){
-        try{await window.Gener8API.completeSession(durationSeconds,score);}catch(e){}
-      }
+      try{await window.Gener8API.completeSession(durationSeconds,score);}catch(err){}
     }
 
     const surveyOverlay=document.getElementById('survey-overlay');
     if(surveyOverlay) surveyOverlay.classList.add('hidden');
-    showTeamPerformance(score,durationSeconds,ranking);
+    showTeamPerformance(score,durationSeconds,null);
 
     if(submitBtn){
       submitBtn.disabled=false;
