@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>AECOPD Scenario v1.0 · Gener8</title>
-<link rel="stylesheet" href="scenario.css?v=20260930-0937">
+<link rel="stylesheet" href="scenario.css?v=20260930-1245">
 </head>
 <body class="prelogin">
 <div id="login-overlay" class="session-overlay" role="dialog" aria-modal="true" aria-labelledby="login-title">
@@ -67,13 +67,33 @@
   </div>
 </div>
 
-<div id="survey-thankyou" class="session-overlay hidden" role="dialog" aria-modal="true">
-  <div class="session-card thankyou-card">
-    <div class="session-brand">Gener8</div>
-    <h1>謝謝您的回饋</h1>
-    <p>本次 AECOPD Scenario v1.0 已完成。</p>
-    <div id="survey-summary"></div>
-    <button id="close-thankyou" class="primary-form-btn">回到教案</button>
+<div id="performance-overlay" class="session-overlay hidden performance-overlay" role="dialog" aria-modal="true" aria-labelledby="performance-title">
+  <div class="session-card performance-card">
+    <div class="session-brand">Gener8 Team Performance</div>
+    <h1 id="performance-title">AECOPD Team Performance</h1>
+    <p class="session-subtitle">本次團隊已完成教案與學習滿意度回饋</p>
+
+    <div class="performance-circles" aria-label="Team Performance results">
+      <div class="performance-circle">
+        <div class="performance-circle-label">答對率</div>
+        <div id="performance-accuracy" class="performance-circle-value">--</div>
+        <div class="performance-circle-unit">%</div>
+      </div>
+      <div class="performance-circle">
+        <div class="performance-circle-label">通關時間</div>
+        <div id="performance-duration" class="performance-circle-value">--:--</div>
+        <div class="performance-circle-unit">分：秒</div>
+      </div>
+      <div class="performance-circle">
+        <div class="performance-circle-label">排名</div>
+        <div id="performance-rank" class="performance-circle-value">—</div>
+        <div class="performance-circle-unit">Team Ranking</div>
+      </div>
+    </div>
+
+    <div class="performance-rule">排名規則：答對率由高至低；答對率相同時，以通關時間較短者優先。</div>
+    <div class="performance-rank-note">目前排名將在排名資料讀取功能啟用後顯示。</div>
+    <button id="finish-performance-btn" class="primary-form-btn performance-finish-btn">完成｜回到 Team 登入頁</button>
   </div>
 </div>
 
@@ -91,5 +111,5 @@
 <script src="data/media-manifest.js"></script>
 <script src="api-config.js?v=20260930-1210"></script>
 <script src="api-client.js?v=20260930-1218"></script>
-<script src="scenario.js?v=20260930-1218"></script>
+<script src="scenario.js?v=20260930-1245"></script>
 </body></html>
