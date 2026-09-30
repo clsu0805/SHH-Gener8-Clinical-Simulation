@@ -18,25 +18,25 @@
   --interaction-scale:1;
 }
 body[data-sensitivity="low"]{
-  --interaction-pad-y:14px;
-  --interaction-pad-x:14px;
-  --interaction-min-height:64px;
-  --interaction-gap:18px;
-  --interaction-scale:.98;
-}
-body[data-sensitivity="normal"]{
-  --interaction-pad-y:18px;
+  --interaction-pad-y:16px;
   --interaction-pad-x:16px;
   --interaction-min-height:72px;
-  --interaction-gap:14px;
+  --interaction-gap:20px;
   --interaction-scale:1;
 }
+body[data-sensitivity="normal"]{
+  --interaction-pad-y:22px;
+  --interaction-pad-x:20px;
+  --interaction-min-height:88px;
+  --interaction-gap:18px;
+  --interaction-scale:1.01;
+}
 body[data-sensitivity="high"]{
-  --interaction-pad-y:25px;
-  --interaction-pad-x:22px;
-  --interaction-min-height:96px;
-  --interaction-gap:10px;
-  --interaction-scale:1.02;
+  --interaction-pad-y:30px;
+  --interaction-pad-x:26px;
+  --interaction-min-height:112px;
+  --interaction-gap:18px;
+  --interaction-scale:1.03;
 }
 .btn{
   min-height:var(--interaction-min-height);
@@ -441,4 +441,41 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
   line-height:1;
   font-weight:900;
   pointer-events:none;
+}
+
+
+/* Enhanced Gener8 hand-touch targets */
+.btn,
+.primary-form-btn,
+.mini-btn,
+.likert-option,
+#toolbar button,
+#toolbar a{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn{
+  position:relative;
+}
+body[data-sensitivity="normal"] .btn,
+body[data-sensitivity="high"] .btn{
+  box-shadow:0 0 0 1px rgba(11,95,148,.05);
+}
+body[data-sensitivity="high"] .btn:active,
+body[data-sensitivity="normal"] .btn:active{
+  transform:scale(.98);
+}
+#toolbar button,
+#toolbar a{
+  min-height:54px;
+  min-width:72px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.primary-form-btn{
+  min-height:64px;
+}
+.likert-option{
+  min-height:70px;
 }
