@@ -599,18 +599,27 @@ function initSurvey(){
     const score=window.Gener8API?.getCalculatedScore?.() ?? 0;
 
     const surveyOverlay=document.getElementById('survey-overlay');
-    if(surveyOverlay) surveyOverlay.classList.add('hidden');
+    const submitBtn=document.querySelector('#survey-form .primary-form-btn');
+    if(submitBtn){
+      submitBtn.disabled=true;
+      submitBtn.textContent='正在儲存並計算學習成果…';
+    }
 
     let ranking=null;
     if(window.Gener8API?.enabled?.()){
       try{await window.Gener8API.saveSatisfaction(answers);}catch(err){}
       try{await window.Gener8API.completeSession(durationSeconds,score);}catch(err){}
       try{
-        await new Promise(resolve=>setTimeout(resolve,450));
+        await new Promise(resolve=>setTimeout(resolve,900));
         ranking=await window.Gener8API.getRanking?.();
       }catch(err){}
     }
 
+    if(surveyOverlay) surveyOverlay.classList.add('hidden');
+    if(submitBtn){
+      submitBtn.disabled=false;
+      submitBtn.textContent='送出學習滿意度';
+    }
     showTeamPerformance(score,durationSeconds,ranking);
   };
   const finish=document.getElementById('finish-performance-btn');
