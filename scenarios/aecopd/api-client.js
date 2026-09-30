@@ -1,6 +1,16 @@
 (()=>{'use strict';
 
 let apiSessionId=null;
+const correctByQuestion=new Map();
+const requiredCorrectCounts={
+  act1_lung_sound:1,
+  act1_cxr:1,
+  act1_medication:2,
+  act1_oxygen:1,
+  act2_lung_sound:1,
+  act2_abg:1,
+  act2_treatment:4
+};
 
 function endpoint(){ return window.GENER8_SHEETS_ENDPOINT || ''; }
 function enabled(){ return !!endpoint(); }
@@ -21,6 +31,7 @@ async function postSheet(payload){
 
 async function startSession(meta){
   if(!enabled()) return null;
+  correctByQuestion.clear();
   apiSessionId=meta.code;
   localStorage.setItem('gener8ApiSessionId',apiSessionId);
 
@@ -50,6 +61,10 @@ async function startSession(meta){
 async function recordEvent(event){
   const sid=apiSessionId||localStorage.getItem('gener8ApiSessionId');
   if(!enabled()||!sid)return null;
+  if(event.question_id&&event.is_correct===true){
+    if(!correctByQuestion.has(event.question_id)) correctByQuestion.set(event.question_id,new Set());
+    correctByQuestion.get(event.question_id).add(String(event.selected_option??'correct'));
+  }
   return postSheet({
     type:'event',
     session_id:sid,
@@ -80,11 +95,28 @@ async function saveSatisfaction(answers){
   });
 }
 
-async function completeSession(durationSeconds,totalScore=null){
-  // The first Google-Sheets version keeps one session row at login.
-  // Completion time/score can be added later with an Apps Script upsert.
-  return {id:apiSessionId||localStorage.getItem('gener8ApiSessionId'),duration_seconds:durationSeconds,total_score:totalScore};
+function calculatedScore(){
+  const questionIds=Object.keys(requiredCorrectCounts);
+  let passed=0;
+  for(const qid of questionIds){
+    const count=correctByQuestion.get(qid)?.size||0;
+    if(count>=requiredCorrectCounts[qid]) passed++;
+  }
+  return Number(((passed/questionIds.length)*100).toFixed(2));
 }
 
-window.Gener8API={enabled,startSession,recordEvent,saveSatisfaction,completeSession,getSessionId:()=>apiSessionId};
+async function completeSession(durationSeconds,totalScore=null){
+  const sid=apiSessionId||localStorage.getItem('gener8ApiSessionId');
+  if(!enabled()||!sid)return null;
+  const score=totalScore==null?calculatedScore():Number(totalScore);
+  return postSheet({
+    type:'complete',
+    session_id:sid,
+    completed_at:new Date().toISOString(),
+    score:score,
+    duration_sec:durationSeconds
+  });
+}
+
+window.Gener8API={enabled,startSession,recordEvent,saveSatisfaction,completeSession,getSessionId:()=>apiSessionId,getCalculatedScore:calculatedScore};
 })();
