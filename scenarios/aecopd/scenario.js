@@ -589,9 +589,12 @@ function cycleSensitivity(){
   const i=sensitivityLevels.indexOf(sensitivity);
   applySensitivity(sensitivityLevels[(i+1)%sensitivityLevels.length]);
 }
-document.addEventListener('click',e=>{
-  const interactive=e.target.closest('.btn,#toolbar button');
+let pointerActivated=null;
+document.addEventListener('pointerdown',e=>{
+  const interactive=e.target.closest('.btn,.primary-form-btn,.mini-btn,#toolbar button,#toolbar a');
   if(!interactive||interactive.id==='sensitivity-btn') return;
+  if(typeof e.button==='number'&&e.button!==0) return;
+
   const now=performance.now();
   const wait=sensitivitySettings[sensitivity].cooldown;
   if(now-lastInteractionAt<wait){
@@ -599,7 +602,23 @@ document.addEventListener('click',e=>{
     e.stopImmediatePropagation();
     return;
   }
+
   lastInteractionAt=now;
+  pointerActivated={element:interactive,until:now+800};
+  e.preventDefault();
+  interactive.classList.add('pointer-active');
+  interactive.click();
+  setTimeout(()=>interactive.classList.remove('pointer-active'),140);
+},true);
+
+document.addEventListener('click',e=>{
+  if(!pointerActivated||!e.isTrusted) return;
+  const {element,until}=pointerActivated;
+  if(performance.now()<=until&&(e.target===element||element.contains(e.target))){
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    pointerActivated=null;
+  }
 },true);
 document.addEventListener('pointerenter',e=>{
   const b=e.target.closest('.btn');
