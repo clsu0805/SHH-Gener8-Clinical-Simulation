@@ -2,6 +2,7 @@
 
 let apiSessionId=null;
 const correctByQuestion=new Map();
+const wrongByQuestion=new Set();
 const requiredCorrectCounts={
   act1_lung_sound:1,
   act1_cxr:1,
@@ -32,6 +33,7 @@ async function postSheet(payload){
 async function startSession(meta){
   if(!enabled()) return null;
   correctByQuestion.clear();
+  wrongByQuestion.clear();
   apiSessionId=meta.code;
   localStorage.setItem('gener8ApiSessionId',apiSessionId);
 
@@ -61,9 +63,16 @@ async function startSession(meta){
 async function recordEvent(event){
   const sid=apiSessionId||localStorage.getItem('gener8ApiSessionId');
   if(!enabled()||!sid)return null;
-  if(event.question_id&&event.is_correct===true){
-    if(!correctByQuestion.has(event.question_id)) correctByQuestion.set(event.question_id,new Set());
-    correctByQuestion.get(event.question_id).add(String(event.selected_option??'correct'));
+  if(event.question_id){
+    if(event.is_correct===false){
+      // Once a wrong option has been selected, this whole scored question
+      // is counted as a miss even if the team later corrects the answer.
+      wrongByQuestion.add(event.question_id);
+    }
+    if(event.is_correct===true){
+      if(!correctByQuestion.has(event.question_id)) correctByQuestion.set(event.question_id,new Set());
+      correctByQuestion.get(event.question_id).add(String(event.selected_option??'correct'));
+    }
   }
   return postSheet({
     type:'event',
@@ -100,7 +109,8 @@ function calculatedScore(){
   let passed=0;
   for(const qid of questionIds){
     const count=correctByQuestion.get(qid)?.size||0;
-    if(count>=requiredCorrectCounts[qid]) passed++;
+    const hadWrongAttempt=wrongByQuestion.has(qid);
+    if(!hadWrongAttempt&&count>=requiredCorrectCounts[qid]) passed++;
   }
   return Number(((passed/questionIds.length)*100).toFixed(2));
 }
