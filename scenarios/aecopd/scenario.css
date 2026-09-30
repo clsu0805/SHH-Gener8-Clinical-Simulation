@@ -411,3 +411,34 @@ body.prelogin #viewport,body.prelogin #toolbar,body.prelogin #version-badge{filt
   margin-top:8px!important;
   margin-bottom:0!important;
 }
+
+
+/* Act 1 treatment selection feedback states */
+.tx-menu .btn{
+  position:relative;
+}
+.tx-menu .btn.correct{
+  background:#edf9f2!important;
+  color:#0e5e38!important;
+  border-color:#4caf7a!important;
+}
+.tx-menu .btn.wrong{
+  background:#eaf4fb!important;
+  color:#103a5d!important;
+  border-color:#a9c9df!important;
+}
+.btn.wrong{
+  position:relative;
+  overflow:visible;
+}
+.btn.wrong::after{
+  content:'✕';
+  position:absolute;
+  right:10px;
+  bottom:5px;
+  color:#ff5fa2;
+  font-size:32px;
+  line-height:1;
+  font-weight:900;
+  pointer-events:none;
+}
