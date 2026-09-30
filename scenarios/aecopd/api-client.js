@@ -118,5 +118,35 @@ async function completeSession(durationSeconds,totalScore=null){
   });
 }
 
-window.Gener8API={enabled,startSession,recordEvent,saveSatisfaction,completeSession,getSessionId:()=>apiSessionId,getCalculatedScore:calculatedScore};
+function getRanking(sessionId=null){
+  const sid=sessionId||apiSessionId||localStorage.getItem('gener8ApiSessionId');
+  if(!enabled()||!sid) return Promise.resolve(null);
+  return new Promise((resolve,reject)=>{
+    const cb='gener8Rank_'+Date.now()+'_'+Math.floor(Math.random()*100000);
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{
+      cleanup();
+      reject(new Error('Ranking request timeout'));
+    },8000);
+    function cleanup(){
+      clearTimeout(timer);
+      try{delete window[cb];}catch(e){window[cb]=undefined;}
+      script.remove();
+    }
+    window[cb]=data=>{
+      cleanup();
+      if(data&&data.success!==false) resolve(data);
+      else reject(new Error(data?.error||'Ranking unavailable'));
+    };
+    const sep=endpoint().includes('?')?'&':'?';
+    script.src=endpoint()+sep+'action=ranking&session_id='+encodeURIComponent(sid)+'&callback='+encodeURIComponent(cb);
+    script.onerror=()=>{
+      cleanup();
+      reject(new Error('Ranking request failed'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+window.Gener8API={enabled,startSession,recordEvent,saveSatisfaction,completeSession,getRanking,getSessionId:()=>apiSessionId,getCalculatedScore:calculatedScore};
 })();
