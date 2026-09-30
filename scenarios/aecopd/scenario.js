@@ -30,9 +30,9 @@ let lungAudio=null;
 let patientSoundEnabled=false;
 const sensitivityLevels=['low','normal','high'];
 const sensitivitySettings={
-  low:{label:'Low',cooldown:420},
-  normal:{label:'Normal',cooldown:240},
-  high:{label:'High',cooldown:100}
+  low:{label:'Low',cooldown:280},
+  normal:{label:'Normal',cooldown:110},
+  high:{label:'High',cooldown:50}
 };
 let sensitivity=localStorage.getItem('gener8InteractionSensitivity')||'normal';
 if(!sensitivitySettings[sensitivity]) sensitivity='normal';
