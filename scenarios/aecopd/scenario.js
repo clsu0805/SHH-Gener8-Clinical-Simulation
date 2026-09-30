@@ -611,28 +611,19 @@ function initSurvey(){
       submitBtn.textContent='正在儲存學習成果…';
     }
 
-    // Save satisfaction first, then immediately show results.
+    let ranking=null;
     if(window.Gener8API?.enabled?.()){
       try{await window.Gener8API.saveSatisfaction(answers);}catch(err){}
-      try{await window.Gener8API.completeSession(durationSeconds,score);}catch(err){}
+      try{
+        ranking=await window.Gener8API.completeAndGetRanking?.(durationSeconds,score);
+      }catch(err){
+        try{await window.Gener8API.completeSession(durationSeconds,score);}catch(e){}
+      }
     }
 
     const surveyOverlay=document.getElementById('survey-overlay');
     if(surveyOverlay) surveyOverlay.classList.add('hidden');
-    showTeamPerformance(score,durationSeconds,null);
-
-    // Ranking loads in the background and updates the third circle when ready.
-    if(window.Gener8API?.enabled?.()){
-      window.Gener8API.getRanking?.().then(ranking=>{
-        const rank=document.getElementById('performance-rank');
-        const note=document.getElementById('performance-rank-note');
-        if(rank&&ranking?.rank&&ranking?.total) rank.textContent='第 '+ranking.rank+' 名';
-        if(note&&ranking?.rank&&ranking?.total) note.textContent='目前共 '+ranking.total+' 組完成本教案';
-      }).catch(()=>{
-        const note=document.getElementById('performance-rank-note');
-        if(note) note.textContent='排名資料暫時無法讀取；答對率與通關時間已正常保存。';
-      });
-    }
+    showTeamPerformance(score,durationSeconds,ranking);
 
     if(submitBtn){
       submitBtn.disabled=false;
