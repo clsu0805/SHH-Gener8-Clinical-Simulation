@@ -562,14 +562,24 @@ function formatDuration(seconds){
   const sec=total%60;
   return String(min).padStart(2,'0')+':'+String(sec).padStart(2,'0');
 }
-function showTeamPerformance(score,durationSeconds){
+function showTeamPerformance(score,durationSeconds,ranking=null){
   const overlay=document.getElementById('performance-overlay');
   const accuracy=document.getElementById('performance-accuracy');
   const duration=document.getElementById('performance-duration');
   const rank=document.getElementById('performance-rank');
+  const note=document.getElementById('performance-rank-note');
   if(accuracy) accuracy.textContent=Number(score||0).toFixed(2);
   if(duration) duration.textContent=formatDuration(durationSeconds);
-  if(rank) rank.textContent='—';
+  if(rank){
+    rank.textContent=ranking?.rank&&ranking?.total
+      ? '第 '+ranking.rank+' 名'
+      : '—';
+  }
+  if(note){
+    note.textContent=ranking?.rank&&ranking?.total
+      ? '目前共 '+ranking.total+' 組完成本教案'
+      : '排名資料暫時無法讀取；答對率與通關時間已正常保存。';
+  }
   if(overlay) overlay.classList.remove('hidden');
 }
 function initSurvey(){
@@ -591,12 +601,17 @@ function initSurvey(){
     const surveyOverlay=document.getElementById('survey-overlay');
     if(surveyOverlay) surveyOverlay.classList.add('hidden');
 
+    let ranking=null;
     if(window.Gener8API?.enabled?.()){
       try{await window.Gener8API.saveSatisfaction(answers);}catch(err){}
       try{await window.Gener8API.completeSession(durationSeconds,score);}catch(err){}
+      try{
+        await new Promise(resolve=>setTimeout(resolve,450));
+        ranking=await window.Gener8API.getRanking?.();
+      }catch(err){}
     }
 
-    showTeamPerformance(score,durationSeconds);
+    showTeamPerformance(score,durationSeconds,ranking);
   };
   const finish=document.getElementById('finish-performance-btn');
   if(finish) finish.onclick=resetScenarioToLogin;
