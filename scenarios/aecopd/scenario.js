@@ -38,6 +38,38 @@ let sensitivity=localStorage.getItem('gener8InteractionSensitivity')||'high';
 if(!sensitivitySettings[sensitivity]) sensitivity='normal';
 let lastInteractionAt=0;
 let centerSceneKey=null;
+let act2AudioContext=null;
+let act2AudioGain=null;
+let act2AudioSource=null;
+const act2BreathingStates=new Set(['ACT2_LUNG_SOUND','ACT2_ABG','ACT2_TREATMENT','ACT2_TREATMENT_CONFIRMED']);
+function isAct2BreathingBoostState(){
+  return act2BreathingStates.has(String(state||''));
+}
+function ensureAct2BreathingBoost(video){
+  if(!video||!isAct2BreathingBoostState()) return;
+  patientSoundEnabled=true;
+  video.muted=false;
+  video.defaultMuted=false;
+  video.removeAttribute('muted');
+  video.volume=1;
+  try{
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtx) return;
+    if(!act2AudioContext) act2AudioContext=new AudioCtx();
+    if(act2AudioContext.state==='suspended') act2AudioContext.resume().catch(()=>{});
+    if(act2AudioSource?.mediaElement!==video){
+      try{act2AudioSource?.disconnect();}catch(e){}
+      act2AudioSource=act2AudioContext.createMediaElementSource(video);
+      act2AudioGain=act2AudioContext.createGain();
+      act2AudioSource.connect(act2AudioGain);
+      act2AudioGain.connect(act2AudioContext.destination);
+    }
+    if(act2AudioGain) act2AudioGain.gain.value=1.8;
+  }catch(e){
+    // Fallback: browser-native maximum volume.
+    video.volume=1;
+  }
+}
 function centerSceneForState(s){
   const key=String(s||'');
   // Act 1 starts with the speaking patient clip. After initial entry,
@@ -113,8 +145,12 @@ function updatePatientSoundUI(){
     b.textContent='Patient Sound: '+(patientSoundEnabled?'On':'Off');
   }
   document.querySelectorAll('video.patient-video').forEach(v=>{
-    v.muted=!patientSoundEnabled;
-    v.volume=patientSoundEnabled?1:0;
+    if(isAct2BreathingBoostState()){
+      ensureAct2BreathingBoost(v);
+    }else{
+      v.muted=!patientSoundEnabled;
+      v.volume=patientSoundEnabled?1:0;
+    }
     if(patientSoundEnabled)v.play().catch(()=>{});
   });
   const o=document.getElementById('patient-sound-overlay');
@@ -124,7 +160,11 @@ function updatePatientSoundUI(){
   }
 }
 function togglePatientSound(){
-  patientSoundEnabled=!patientSoundEnabled;
+  if(isAct2BreathingBoostState()){
+    patientSoundEnabled=true;
+  }else{
+    patientSoundEnabled=!patientSoundEnabled;
+  }
   updatePatientSoundUI();
 }
 function renderCenter(force=false){
@@ -149,6 +189,8 @@ function renderCenter(force=false){
     b.appendChild(o);
   }
   center.appendChild(b);
+  const mountedPatientVideo=b.querySelector('video.patient-video');
+  if(mountedPatientVideo&&isAct2BreathingBoostState()) ensureAct2BreathingBoost(mountedPatientVideo);
   updatePatientSoundUI();
 }
 function patientBackground(){return '<div class="eyebrow">Act 1｜Initial Assessment</div><div class="patient-background-head"><h1>病人背景</h1><div class="card patient-background-card"><p>68 歲男性，170 cm / 60 kg，AECOPD<br>昨天住急診入院，今日頻咳、痰黃</p></div></div>';}
@@ -405,6 +447,11 @@ function niv(){
 function setState(s){
   pauseLungAudio();
   state=s;
+  if(isAct2BreathingBoostState()){
+    patientSoundEnabled=true;
+  }else if(act2AudioGain){
+    act2AudioGain.gain.value=1;
+  }
   stateStartedAt=Date.now();
   addEvidence(s);
   const key=String(s||'');
